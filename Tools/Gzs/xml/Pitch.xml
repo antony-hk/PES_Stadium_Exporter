@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<fox formatVersion="2" fileVersion="0" originalVersion="Sat Jan 09 08:21:30 UTC+07:00 2021">
+<fox formatVersion="2" fileVersion="0" originalVersion="Tue Jan 12 20:26:45 UTC+07:00 2021">
   <classes>
     <class name="Entity" super="" version="2" />
     <class name="Data" super="Entity" version="2" />
@@ -8,7 +8,7 @@
     <class name="TransformEntity" super="" version="0" />
   </classes>
   <entities>
-    <entity class="DataSet" classVersion="0" addr="0xEB340250" unknown1="296" unknown2="0">
+    <entity class="DataSet" classVersion="0" addr="0x00000100" unknown1="296" unknown2="0">
       <staticProperties>
         <property name="name" type="String" container="StaticArray" arraySize="1">
           <value hash="0xB8A0BF169F98" />
@@ -17,24 +17,24 @@
           <value>0x00000000</value>
         </property>
         <property name="dataList" type="EntityPtr" container="StringMap" arraySize="1">
-          <value key="EMdl_pitch_stid">0xED412E10</value>
+          <value key="StadiumModel_pitch">0x00000400</value>
         </property>
       </staticProperties>
       <dynamicProperties />
     </entity>
-    <entity class="EnlightenStadiumModel" classVersion="1" addr="0xED412E10" unknown1="448" unknown2="0">
+    <entity class="EnlightenStadiumModel" classVersion="1" addr="0x00000400" unknown1="448" unknown2="0">
       <staticProperties>
         <property name="name" type="String" container="StaticArray" arraySize="1">
-          <value>EMdl_pitch_stid</value>
+          <value>StadiumModel_pitch</value>
         </property>
         <property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">
-          <value>0xEB340250</value>
+          <value>0x00000100</value>
         </property>
         <property name="parent" type="EntityHandle" container="StaticArray" arraySize="1">
           <value>0x00000000</value>
         </property>
         <property name="transform" type="EntityPtr" container="StaticArray" arraySize="1">
-          <value>0xE8520170</value>
+          <value>0x00000500</value>
         </property>
         <property name="shearTransform" type="EntityPtr" container="StaticArray" arraySize="1">
           <value>0x00000000</value>
@@ -62,7 +62,7 @@
           <value>-1</value>
         </property>
         <property name="lodPolygonSize" type="float" container="StaticArray" arraySize="1">
-          <value>0.1</value>
+          <value>-1</value>
         </property>
         <property name="color" type="Color" container="StaticArray" arraySize="1">
           <value r="1" g="1" b="1" a="1" />
@@ -89,7 +89,7 @@
           <value>0</value>
         </property>
         <property name="guid" type="String" container="StaticArray" arraySize="1">
-          <value>4386d6d1b5d932577ca82f05781dc799</value>
+          <value>49187677d10573c34a378ded9b593abe</value>
         </property>
         <property name="enlightenQuality" type="int32" container="StaticArray" arraySize="1">
           <value>2</value>
@@ -121,10 +121,10 @@
       </staticProperties>
       <dynamicProperties />
     </entity>
-    <entity class="TransformEntity" classVersion="0" addr="0xE8520170" unknown1="96" unknown2="0">
+    <entity class="TransformEntity" classVersion="0" addr="0x00000500" unknown1="96" unknown2="0">
       <staticProperties>
         <property name="owner" type="EntityHandle" container="StaticArray" arraySize="1">
-          <value>0xED412E10</value>
+          <value>0x00000400</value>
         </property>
         <property name="transform_scale" type="Vector3" container="StaticArray" arraySize="1">
           <value x="1" y="1" z="1" w="0" />

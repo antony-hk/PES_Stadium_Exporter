@@ -8,6 +8,8 @@ cl=['\n\t<classes>'
     '\n\t\t<class name="Data" super="Entity" version="2" />'
     '\n\t\t<class name="DataSet" super="" version="0" />'
     '\n\t\t<class name="StadiumModel" super="" version="3" />'
+	'\n\t\t<class name="EnlightenProbeSet" super="" version="0" />'
+    '\n\t\t<class name="EnlightenSystemContainer" super="" version="0" />'
     '\n\t\t<class name="TransformEntity" super="" version="0" />'
     '\n\t\t<class name="ShearTransformEntity" super="" version="0" />'
     '\n\t\t<class name="PivotTransformEntity" super="" version="0" />'
@@ -34,6 +36,7 @@ foxroot=["\n\t</entities>"
 def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds):
 	StadiumModel=str()
 	idx1,idx2,idx3=0,0,0
+	stid= bpy.context.scene.STID
 	with open(filename, "w", encoding="utf-8") as file:
 		file.write('<?xml version="1.0" encoding="utf-8"?>')
 		file.write('\n<fox formatVersion="2" fileVersion="0" originalVersion="{0}">'.format(mydate.strftime("%c")))
@@ -43,9 +46,14 @@ def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlis
 		for dtlist in dataList:
 			file.write('\n\t\t\t\t\t<value key="{0}">{1}</value>'.format(Stadium_Model[idx1],dtlist))
 			idx1+=1
+		file.write('\n\t\t\t\t\t<value key="EnlightenProbeSet0000">0x00007200</value>')
+		file.write('\n\t\t\t\t\t<value key="EnlightenSystemContainer0000">0x00007500</value>')
 		file.write('\n\t\t\t\t</property>')
 		for ls in lsRow:
 			file.write(ls)
+		Enlighten=open(PES_Stadium_Exporter.xml_dir+'EnlightenSystem.xml','rt').read()
+		Enlighten=Enlighten.replace("stid",stid)
+		file.write(Enlighten)
 		for dtlist in dataList:
 			StadiumModel=open(PES_Stadium_Exporter.xml_dir+'StadiumModel.xml','rt').read()
 			StadiumModel=StadiumModel.replace("DirName",Stadium_Model[idx2])

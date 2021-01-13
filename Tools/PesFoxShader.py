@@ -150,8 +150,7 @@ def setShader(self, context):
 								blenderTexture.location = Vector((-500, 300))
 								blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], TRM_Subsurface.inputs['TRM Tex'])
 							elif 'MetalnessMap_Tex_' in textureRole:
-								principled.inputs[4].default_value = 0.7
-								#blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], principled.inputs['Metallic'])
+								blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], principled.inputs['Metallic'])
 								blenderTexture.location = Vector((-750, 0))
 							else:
 								blenderTexture.location = Vector((rdmx, rdmy))

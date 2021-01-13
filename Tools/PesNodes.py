@@ -84,13 +84,6 @@ def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMap
 		blenderImage.source = 'FILE'
 		createNodes(blenderMaterial)
 
-		if '_SRGB' in textureRole:
-			blenderImage.colorspace_settings.name = 'sRGB'
-		elif '_LIN' in textureRole:
-			blenderImage.colorspace_settings.name = 'Linear'
-		else:
-			blenderImage.colorspace_settings.name = 'Non-Color'
-
 		filename = findTexture(texture, textureSearchPath)
 		if filename is None:
 			blenderImage.filepath = texture_path
@@ -104,6 +97,8 @@ def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMap
 		if 'pes3DDF_Skin_Face' in blenderMaterial.fmdl_material_technique:
 			blenderMaterial.use_sss_translucency = True
 		if 'pes3DDF_Hair' in blenderMaterial.fmdl_material_technique:
+			blenderMaterial.blend_method = 'HASHED'
+		elif '_Glass' in blenderMaterial.fmdl_material_technique:
 			blenderMaterial.blend_method = 'HASHED'
 		elif 'pes3DDC_Adjust' in blenderMaterial.fmdl_material_technique:
 			blenderMaterial.blend_method = 'CLIP'
@@ -146,7 +141,9 @@ def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMap
 		blenderMaterial.node_tree.links.new(SRM_Seperator.outputs['Specular'], principled.inputs['Specular'])
 		blenderMaterial.node_tree.links.new(SRM_Seperator.outputs['Roughness'], principled.inputs['Roughness'])
 		blenderMaterial.node_tree.links.new(NRM_Converter.outputs['Normal'], principled.inputs['Normal'])
+		blenderImage.colorspace_settings.name = 'Non-Color'		
 		if 'Base_Tex_SRGB' in textureRole or 'Base_Tex_LIN' in textureRole:
+			blenderImage.colorspace_settings.name = 'sRGB'
 			blenderTexture.location = Vector((-500, 560))
 			blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], principled.inputs['Base Color'])
 			blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], TRM_Subsurface.inputs['BSM Tex'])
@@ -169,8 +166,7 @@ def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMap
 			blenderTexture.location = Vector((-500, 300))
 			blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], TRM_Subsurface.inputs['TRM Tex'])
 		elif 'MetalnessMap_Tex_' in textureRole:
-			principled.inputs[4].default_value = 0.7
-			#blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], principled.inputs['Metallic'])
+			blenderMaterial.node_tree.links.new(blenderTexture.outputs['Color'], principled.inputs['Metallic'])
 			blenderTexture.location = Vector((-750, 0))
 		else:
 			blenderTexture.location = Vector((rdmx, rdmy))

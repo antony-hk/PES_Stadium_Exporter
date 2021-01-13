@@ -1,14 +1,14 @@
-import bpy, os, bpy.utils.previews, bpy_extras,shutil,bmesh
+import bpy, os, bpy.utils.previews, bpy_extras,shutil,bmesh,re
 from struct import pack,unpack
 from bpy.props import (EnumProperty, CollectionProperty, IntProperty, StringProperty, BoolProperty, FloatProperty, FloatVectorProperty)
-from Tools import FmdlFile, Ftex, IO, PesFoxShader, PesFoxXML
+from Tools import FmdlFile, Ftex, IO, PesFoxShader, PesFoxXML, Enlighten
 from xml.dom import minidom
 from xml.dom.minidom import parse
 
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"author": "the4chancup - MjTs-140914",
-	"version": (0, 1, 0),
+	"version": (0, 2, 0),
 	"blender": (2, 80, 0),
 	"api": 35853,
 	"location": "Under Scene Tab",
@@ -19,8 +19,10 @@ bl_info = {
 	"category": "System"
 }
 
+
 (major, minor, build) = bpy.app.version
 icons_collections = {}
+myver="v0.2.0a"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -35,8 +37,10 @@ uvDataFile = '%s\\addons\\Tools\\Gzs\\uvMapData.bin' % AddonsPath
 lightFxPath = '%s\\addons\\Tools\\Gzs\\' % AddonsPath
 baseStartupFile = '%s\\addons\\Tools\\Gzs\\startup.blend' % AddonsPath
 startupFile = '%sconfig\\startup.blend'%AddonsPath[:-7]
+EnlightenPath="%s\\addons\\Tools\\Gzs\\EnlightenOutput\\" % AddonsPath 
+
 ob_id = None
-group_list=["MAIN", "TV", "AUDIAREA", "FLAGAREA", "STAFF", "SCARECROW", "PITCH2021", "CHEER1", "CHEER2", "LIGHTS"]
+group_list=["MAIN", "TV", "AUDIAREA", "FLAGAREA", "STAFF", "SCARECROW", "PITCH2021", "CHEER1", "CHEER2", "LIGHTS", "AD"]
 
 parent_main_list=["MESH_back1","MESH_back2","MESH_back3",
 				 "MESH_center1","MESH_center2","MESH_center3",
@@ -45,6 +49,8 @@ parent_main_list=["MESH_back1","MESH_back2","MESH_back3",
 				 "MESH_right1","MESH_right2","MESH_right3",
 				 "MESH_Pitch","MESH_front1_demo","MESH_front1_game",
 				 "MESH_center1_snow","MESH_center1_rain",			 
+				 "MESH_ad_acl","MESH_ad_cl","MESH_ad_el","MESH_ad_normal",			 
+				 "MESH_ad_olc","MESH_ad_sc", 
 ]
 
 main_list=["back1","back2","back3",
@@ -57,6 +63,8 @@ main_list=["back1","back2","back3",
 		   "TV_Large_Left","TV_Large_Right","TV_Large_Front","TV_Large_Back",
 		   "TV_Small_Left","TV_Small_Right","TV_Small_Front","TV_Small_Back",
 		   "L_FRONT","L_RIGHT","L_LEFT","L_BACK",
+		   "ad_acl","ad_cl","ad_el","ad_normal",			 
+		   "ad_olc","ad_sc", 
 ]
 
 part_export=[("MAIN","MAIN","MAIN"),
@@ -69,6 +77,7 @@ part_export=[("MAIN","MAIN","MAIN"),
 			("FLAGAREA","FLAGAREA","FLAGAREA"),
 			("AUDIAREA","AUDIAREA","AUDIAREA"),
 			("LIGHTS","LIGHTS","LIGHTS"),
+			("AD","AD","AD"),
 ]
 
 crowd_part=['C_front1','C_front2','C_front3',
@@ -198,6 +207,8 @@ pivotTransform=[0x03173F80,0x03173DC0,0x03173DC2,
 				0x03173570,0x03173730,
 ]
 
+
+
 crowd_type = {'UltraHome':0.9,
 			  'HardcoreHome':0.8999,
 			  'HeavyHome':0.7999,
@@ -230,7 +241,7 @@ behavior=[('UltraHome', 'UltraHome', 'UltraHome'),
 parentlist=[]
 shaders=[]
 
-def makedir(DirName):
+def makedir(DirName, isStadium):
 	listDir=[]
 	splitDir = str(DirName).split('\\')
 	for idx in enumerate(splitDir):
@@ -241,7 +252,10 @@ def makedir(DirName):
 		liststr=str(liststr).replace("[","")
 		liststr=str(liststr).replace("]","")
 		liststr=str(liststr).replace(" ","\\")
-		dirNew = os.path.join(bpy.context.scene.export_path,liststr)
+		if isStadium:
+			dirNew = os.path.join(bpy.context.scene.export_path,liststr)
+		else:
+			dirNew = os.path.join(bpy.context.scene.export_path[:-6],liststr)
 		if not os.path.exists(dirNew):
 			os.mkdir(dirNew)
 	return 1
@@ -387,6 +401,8 @@ def Create_Parent_Part(self, context):
 			elif ob.name in ["TV_Large_Left","TV_Large_Right","TV_Large_Front","TV_Large_Back",
 							"TV_Small_Left","TV_Small_Right","TV_Small_Front","TV_Small_Back"]:
 				ob.parent = bpy.data.objects["TV"]
+			elif ob.name in ["ad_acl","ad_cl","ad_el","ad_normal","ad_olc","ad_sc"]:
+				ob.parent = bpy.data.objects["AD"]
 			elif ob.name in datalist:
 				ob.parent = bpy.data.objects["MAIN"]
 			if ob.name in parent_main_list:
@@ -394,6 +410,50 @@ def Create_Parent_Part(self, context):
 					if op in ob.name and True:
 						ob.parent = bpy.data.objects[op]
 	return 1
+
+def checkStadiumID(context, isParent):
+	if isParent:
+		for child in bpy.data.objects[context.scene.part_info].children:
+			if child.type == 'EMPTY' and child is not None:
+				for ob in bpy.data.objects[child.name].children:
+					if ob is not None:
+						for ob2 in bpy.data.objects[ob.name].children:
+							if ob2 is not None and  ob2.type == "MESH":
+								blenderMaterial = bpy.data.objects[ob2.name].active_material
+								for nodes in blenderMaterial.node_tree.nodes:
+									if nodes.type == "TEX_IMAGE":
+										blenderTexture = blenderMaterial.node_tree.nodes[nodes.name].fmdl_texture_directory
+										if "st" in blenderTexture:
+											if not context.scene.STID in blenderTexture:
+												print("\nStadium ID isn't match!!")
+												print("\nSome stadium IDs do not match in the node, please check first or you can swap all stadium IDs")
+												print("\nCheck out Object in Parent({0} --> {1} --> {2}) in Mesh object({3}) in node({4})"
+												.format(context.scene.part_info, ob.parent.name, ob2.parent.name, ob2.name, nodes.name))
+												return True
+											else:
+												return False
+
+	else:
+		for child in bpy.data.objects[context.scene.part_info].children:
+			if child.type == 'EMPTY' and child is not None:
+				for ob2 in bpy.data.objects[child.name].children:
+					if ob2 is not None and  ob2.type == "MESH":
+						blenderMaterial = bpy.data.objects[ob2.name].active_material
+						for nodes in blenderMaterial.node_tree.nodes:
+							if nodes.type == "TEX_IMAGE":
+								blenderTexture = blenderMaterial.node_tree.nodes[nodes.name].fmdl_texture_directory
+								print(blenderTexture)
+								if "st" in blenderTexture:
+									if not context.scene.STID in blenderTexture:
+										print("\nStadium ID isn't match!!")
+										print("\nSome stadium IDs do not match in the node, please check first or you can swap all stadium IDs")
+										print("\nCheck out Object in Parent({0} --> {1}) in Mesh object({2}) in node({3})"
+										.format(context.scene.part_info, ob2.parent.name, ob2.name, nodes.name))
+										return True
+									else:
+										return False
+	pass
+
 
 class FMDL_MaterialParameter(bpy.types.PropertyGroup):
 	name : StringProperty(name="Parameter Name")
@@ -650,22 +710,18 @@ class FMDL_21_PT_Object_BoundingBox_Panel(bpy.types.Panel):
 		self.layout.operator(FMDL_Object_BoundingBox_Create.bl_idname)
 		self.layout.operator(FMDL_Object_BoundingBox_Remove.bl_idname)
 
-def light_fx():
-	print("\nStarting Light FX Export !!\n")
+def light_fx(outxml):
 	scn = bpy.context.scene
-	inp_fpx_fname = "effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+".fpk"
-	inp_fpk = ' "'+scn.export_path+inp_fpx_fname+'"'		
-	pack_unpack_Fpk(inp_fpk)
 	hdr_file=open(lightFxPath+"extras21.dll","rb")
 	hdr_file.seek(942,0)
 	dat13=hdr_file.read(236)
 	dat14=hdr_file.read(28)
 	dat15=hdr_file.read(68)
 	hdr_file.flush(),hdr_file.close()
-	inp_fname = "effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+"_fpk"
-	cfg = 'effect_config_%s.xml' %scn.time_mode
 	
-	dat16=open(lightFxPath+'xml\\'+cfg,'rt').read()
+	cfg = lightFxPath+'xml\\effect_config_%s.xml' %scn.time_mode
+	
+	dat16=open(cfg,'rt').read()
 	LT = scn.l_fx_tex
 	if LT in ['00','01','04']:
 		LR = '30'
@@ -674,7 +730,7 @@ def light_fx():
 	dat16=dat16.replace('%LT',LT)
 	dat16=dat16.replace('%LR',LR)
 	dat16=dat16.replace('stid',scn.STID)
-	light_cfg=open(scn.export_path+inp_fname+'\\effect_config.xml','wt')
+	light_cfg=open(outxml,'wt')
 	light_cfg.write(dat16)
 	light_cfg.flush(),light_cfg.close()
 	dirname="effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+"_fpk"
@@ -721,12 +777,6 @@ def light_fx():
 			lfx.seek(64,0)
 			lfx.write(pack("I",sz1-24))
 			lfx.close()	
-	inp_fname2 = "effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+".fpk.xml"
-	inp_xml = ' "'+scn.export_path+inp_fname2+'"'		
-	pack_unpack_Fpk(inp_xml)
-	os.remove(scn.export_path+inp_fname2)
-	shutil.rmtree(scn.export_path+"effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+"_fpk")
-
 	return 1
 
 class FMDL_21_PT_UIPanel(bpy.types.Panel):
@@ -749,7 +799,7 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 		this_icon = icons_collections["custom_icons"]["icon_0"].icon_id
 		row.label(text="Made by: MjTs-140914 / the4chancup", icon_value=this_icon)
 		row = box.row()
-		box.label(text="Blender version {0}.{1}.{2} (v0.1.0a)".format(major, minor, build) , icon="BLENDER")
+		box.label(text="Blender version {0}.{1}.{2} ({3})".format(major, minor, build, myver) , icon="BLENDER")
 		row = box.row()
 		row.operator("main_parts.operator", text="Create Main Parts", icon="EMPTY_DATA")
 		row.operator("scene.operator", text="", icon="PRESET_NEW")
@@ -809,6 +859,7 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 			row.prop(scn,"part_info")
 			row = box.row()
 			row.prop(scn, "STID")
+			row.operator("newid.operator", text="", icon="CENTER_ONLY")
 			row = box.row()
 			row.prop(scn, "export_path")
 			if scn.part_info == "MAIN":
@@ -817,7 +868,13 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 				row.label(text="Stadium Export", icon="INFO")
 				row = box.row()
 				row.operator("convert.operator", text="Export Texture", icon="NODE_TEXTURE")
-				row.operator("clear_temp.operator", text="Clear Temp", icon="TRASH").opname = "cleartempdata"
+				if scn.convertMode:
+					txt="Convert as Faster"
+				else:
+					txt="Convert as Slower"
+				row.prop(scn, "convertMode", text=txt)
+				#row.operator("clear_temp.operator", text="", icon="MOD_EXPLODE").opname = "cleartempdata"
+				row.operator("clear_temp.operator", text="", icon="TRASH").opname = "cleartempdata"
 				row = box.row()
 				row.operator("export_stadium.operator", text="EXPORT STADIUM", icon="EXPORT")
 			elif scn.part_info == "AUDIAREA":
@@ -884,7 +941,6 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 				row = box.row()
 				row.label(text="Pitch Exporter", icon="INFO")
 				row = box.row()
-				row.operator("export_pitch.operator", text="", icon="EXPORT")
 				row.operator("export_pitch.operator", text="EXPORT Pitch", icon="EXPORT")
 				row = box.row()
 			elif scn.part_info == "STAFF" and ob is not None:
@@ -895,6 +951,12 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 				row.operator("staff_pos.operator", text="Load Coach", icon="IMPORT").opname = "loadcoach"
 				row.operator("staff_pos.operator", text="Assign Coach", icon="EXPORT").opname = "assigncoach"
 				row = box.row()
+			elif scn.part_info == "AD" and ob is not None:
+				box = layout.box()
+				row = box.row()
+				row.label(text="Stadium AD Export", icon="INFO")
+				row = box.row()
+				row.operator("export_ad.operator", text="EXPORT AD STADIUM", icon="EXPORT")
 
 class Staff_Coach_Pos(bpy.types.Operator):
 	"""Import / Export Staff Coach Position"""
@@ -986,6 +1048,62 @@ class Staff_Coach_Pos(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
+
+class New_STID(bpy.types.Operator):
+	"""Swap old ID to new ID"""
+	bl_idname = "newid.operator"
+	bl_label = str()
+
+	@classmethod
+	def poll(cls, context):
+		return (context.mode == "OBJECT")
+	
+	def execute(self, context):
+		Rslt=str()
+		stid=context.scene.STID
+		if len(stid) == 5:
+			if context.scene.export_path == str():
+				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+
+			if not stid in context.scene.export_path:
+				self.report({"WARNING"}, "Stadium ID doesn't match!!")
+				print("Stadium ID doesn't match!!")
+				return {'CANCELLED'}
+
+			if not context.scene.export_path.endswith(stid+"\\"):
+				self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+			self.report( {"INFO"}, " Light FX Exported has been Successfully... " )
+		else:
+			self.report({"WARNING"}, "Stadium ID isn't correct!!")
+		for child in bpy.data.objects[context.scene.part_info].children:
+			if child.type == 'EMPTY' and child is not None:
+				for ob in bpy.data.objects[child.name].children:
+					if ob is not None:
+						for ob2 in bpy.data.objects[ob.name].children:
+							if ob2 is not None and  ob2.type == "MESH":
+								blenderMaterial = bpy.data.objects[ob2.name].active_material
+								for nodes in blenderMaterial.node_tree.nodes:
+									if nodes.type == "TEX_IMAGE":
+										blenderTexture = blenderMaterial.node_tree.nodes[nodes.name].fmdl_texture_directory
+										if "st" in blenderTexture:
+											oldID=re.findall(r'\d+', blenderTexture)
+											try:
+												for i in range(100):
+													Rslt="st"+oldID[i] 
+											except:
+												pass
+											print("Swap id from ({0}) to ({1}) in object ({2}) in node ({3}) succesfully...".format(Rslt,stid,ob2.name,nodes.name))
+											assetDirname = blenderTexture
+											newid=str(assetDirname).replace(assetDirname,"/Assets/pes16/model/bg/%s/sourceimages/tga/"%stid)
+											blenderMaterial.node_tree.nodes[nodes.name].fmdl_texture_directory=newid
+		self.report( {"INFO"}, "Swap stadium id succesfully!" )
+		return {'FINISHED'}
+	pass
+
 class TV_Objects(bpy.types.Operator):
 	"""Add TV Objects"""
 	bl_idname = "tv_object.operator"
@@ -1023,7 +1141,7 @@ class Light_FX(bpy.types.Operator):
 					l_ob.parent = bpy.data.objects[bpy.context.scene.l_lit_side]
 
 			return {'FINISHED'}
-		elif self.opname == "export_lfx":
+		if self.opname == "export_lfx":
 			if len(stid) == 5:
 				if context.scene.export_path == str():
 					self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
@@ -1039,8 +1157,26 @@ class Light_FX(bpy.types.Operator):
 					self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 					print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 					return {'CANCELLED'}
-				light_fx()
-				self.report( {"INFO"}, " Light FX Exported has been Successfully... " )
+				scn = bpy.context.scene
+				fpkPath="{0}effect\\#Win\\effect_{1}_{2}.fpk".format(scn.export_path, scn.STID,scn.time_mode)
+				xmlPath="{0}effect\\#Win\\effect_{1}_{2}.fpk.xml".format(scn.export_path, scn.STID,scn.time_mode)
+				xmlConfigPath= "{0}effect\\#Win\\effect_{1}_{2}_fpk\\effect_config.xml".format(scn.export_path, scn.STID,scn.time_mode)
+				if os.path.isfile(fpkPath):	
+					print("\nStarting Light FX Export !!\n")
+					pack_unpack_Fpk(fpkPath)
+				else:
+					self.report( {"WARNING"}, "%s file not found!"%fpkPath)
+					print("%s file not found!"%fpkPath)
+					return {'CANCELLED'}
+				try:
+					light_fx(xmlConfigPath)
+					self.report( {"INFO"}, " Light FX Exported has been Successfully... ")
+				except Exception as msg:
+					self.report( {"WARNING"}, format(msg))
+					return {'CANCELLED'}	
+				pack_unpack_Fpk(xmlPath)
+				remove_file(xmlPath)
+				remove_dir("{0}effect\\#Win\\effect_{1}_{2}_fpk".format(scn.export_path, scn.STID,scn.time_mode))
 			else:
 				self.report({"WARNING"}, "Stadium ID isn't correct!!")
 			return {'FINISHED'}
@@ -1062,6 +1198,8 @@ class Refresh_OT(bpy.types.Operator):
 		else:
 			parentlist = [("MESH_"+ob.name,"MESH_"+ob.name,"MESH_"+ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT', 'MESH_CROWD', 'MESH_FLAGAREA']]
 			parentlist.sort(reverse=1)
+		if scn.part_info == "AD":
+			parentlist.sort(reverse=0)
 		bpy.types.Object.droplist = EnumProperty(name="Parent List", items=parentlist)
 		for p_ob in bpy.data.objects:
 			if p_ob.type == 'EMPTY' and p_ob.parent and p_ob.name in parent_main_list :
@@ -1397,13 +1535,13 @@ class Crowd_OT(bpy.types.Operator):
 				makeXML(context.scene.export_path+"audi\\#Win\\audiarea_%s"%stid+".fpk.xml", assetDirname+"audiarea.bin", "audiarea_%s.fpk"%stid,"Fpk","FpkFile", False)
 				assetDir = os.path.join(context.scene.export_path,"audi", "#Win", "audiarea_%s_fpk"%stid, "Assets","pes16","model","bg",stid,"audi\\audiarea.bin")
 				dir_to_remove = os.path.join(context.scene.export_path,"audi", "#Win", "audiarea_%s_fpk"%stid)
-				makedir("audi\\#Win\\audiarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\audi".format(stid,stid))
+				makedir("audi\\#Win\\audiarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\audi".format(stid,stid),True)
 				crowd_exp(assetDir,'MESH_CROWD', crowd_part)
 				pack_unpack_Fpk(dir_to_remove[:-4]+".fpk.xml")
 				remove_dir(dir_to_remove)
 				remove_file(dir_to_remove[:-4]+".fpk.xml")
 				#Create fpkd for audiarea
-				makedir("audi\\#Win\\audiarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\audi".format(stid,stid))
+				makedir("audi\\#Win\\audiarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\audi".format(stid,stid),True)
 				fox2xml("Crowd.xml","audi\\#Win\\audiarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\audi\\audiarea_{2}.fox2.xml".format(stid,stid,stid))
 				makeXML(context.scene.export_path+"audi\\#Win\\audiarea_%s"%stid+".fpkd.xml", assetDirname+"audiarea_%s.fox2"%stid, "audiarea_%s.fpkd"%stid,"Fpk","FpkFile", False)
 				compileXML("{0}audi\\#Win\\audiarea_{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\audi\\audiarea_{3}.fox2.xml".format(context.scene.export_path,stid,stid,stid))
@@ -1471,13 +1609,13 @@ class Flags_Area_OT(bpy.types.Operator):
 				makeXML(context.scene.export_path+"standsFlag\\#Win\\flagarea_%s"%stid+".fpk.xml", assetDirname+"flagarea.bin", "flagarea_%s.fpk"%stid,"Fpk","FpkFile", False)
 				assetDir = os.path.join(context.scene.export_path,"standsFlag", "#Win", "flagarea_%s_fpk"%stid, "Assets","pes16","model","bg",stid,"standsFlag\\flagarea.bin")
 				dir_to_remove = os.path.join(context.scene.export_path,"standsFlag", "#Win", "flagarea_%s_fpk"%stid)
-				makedir("standsFlag\\#Win\\flagarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\standsFlag".format(stid,stid))
+				makedir("standsFlag\\#Win\\flagarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\standsFlag".format(stid,stid),True)
 				crowd_exp(assetDir,'MESH_FLAGAREA', flags_part)
 				pack_unpack_Fpk(dir_to_remove[:-4]+".fpk.xml")
 				remove_dir(dir_to_remove)
 				remove_file(dir_to_remove[:-4]+".fpk.xml")
 				#Create fpkd for Flagarea
-				makedir("standsFlag\\#Win\\flagarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\standsFlag".format(stid,stid))
+				makedir("standsFlag\\#Win\\flagarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\standsFlag".format(stid,stid),True)
 				fox2xml("Flagarea.xml","standsFlag\\#Win\\flagarea_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\standsFlag\\flagarea_{2}.fox2.xml".format(stid,stid,stid))
 				makeXML(context.scene.export_path+"standsFlag\\#Win\\flagarea_%s"%stid+".fpkd.xml", assetDirname+"flagarea_%s.fox2"%stid, "flagarea_%s.fpkd"%stid,"Fpk","FpkFile", False)
 				compileXML("{0}standsFlag\\#Win\\flagarea_{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\standsFlag\\flagarea_{3}.fox2.xml".format(context.scene.export_path,stid,stid,stid))
@@ -1556,7 +1694,6 @@ def crowd_groups(Name):
 	bpy.ops.object.editmode_toggle()
 	return 1
 
-
 class Export_OT(bpy.types.Operator):
 	"""Export Stadium"""
 	bl_idname = "export_stadium.operator"
@@ -1596,7 +1733,15 @@ class Export_OT(bpy.types.Operator):
 		else:
 			self.report({"WARNING"}, "Stadium ID isn't correct!!")
 			return {'CANCELLED'}
-		shearTransformlist,pivotTransformlist,dataList,files=[],[],[],[]
+		checks=checkStadiumID(context, True)
+		if checks:
+			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			return {'CANCELLED'}
+		files,files2=[],[]
+		for en in Enlighten.EnlightenAsset:
+			en=en.replace("stid",stid)
+			files2.append(en)
+		shearTransformlist,pivotTransformlist,dataList=[],[],[]
 		Stadium_Model,TransformEntityList,Stadium_Kinds=[],[],[]
 		arraySize=0
 		print('\nStarting export object as .FMDL')
@@ -1610,8 +1755,8 @@ class Export_OT(bpy.types.Operator):
 							if ob2 is not None:
 								print('\n********************************')
 								arraySize +=1
-								makedir("#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid))
-								makedir("#Win\\{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}".format(stid,stid))
+								makedir("#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
+								makedir("#Win\\{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}".format(stid,stid),True)
 								objName = child.name
 								fmdlName = child.name
 								try:
@@ -1661,12 +1806,13 @@ class Export_OT(bpy.types.Operator):
 								print('Exporting ==> %s' % meshID)
 								print('********************************')
 								files.append(assetDirname +fmdlName+".fmdl")
+								files2.append(assetDirname +fmdlName+".fmdl")
 								dataList.append(addr)
 								shearTransformlist.append(shearTransformaddr)
 								pivotTransformlist.append(pivotTransformaddr)
 								TransformEntityList.append(Transformaddr)
 								export_fmdl(self, context, fileName, meshID, objName)
-		makeXML(exportPath+ "#Win\\"+stid+".fpk.xml", files, "%s.fpk"%stid,"Fpk","FpkFile", True)
+		makeXML(exportPath+ "#Win\\"+stid+".fpk.xml", files2, "%s.fpk"%stid,"Fpk","FpkFile", True)
 		makeXML(exportPath+ "#Win\\"+stid+".fpkd.xml", "/Assets/pes16/model/bg/{0}/{1}_modelset.fox2".format(stid,stid), "%s.fpkd"%stid,"Fpkd","FpkFile", False)
 		fox2XmlPath="{0}#Win\\{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\{3}_modelset.fox2.xml".format(exportPath,stid,stid,stid)
 		try:
@@ -1675,6 +1821,14 @@ class Export_OT(bpy.types.Operator):
 		except Exception as msg:
 			self.report({"INFO"}, format(msg))
 			return {'CANCELLED'}
+		#Create Enlighten System
+		EnlightenPathOut="#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\EnlightenOutput".format(stid,stid)
+		makedir(EnlightenPathOut,True)
+		for filenames in os.walk(EnlightenPath):
+			for fname in filenames[2]:
+				oldName=str(fname)
+				newName=oldName.replace("stid",stid)
+				shutil.copyfile(EnlightenPath+oldName,exportPath+EnlightenPathOut+"\\"+newName)
 		pack_unpack_Fpk("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
 		remove_dir("{0}#Win\\{1}_fpk".format(exportPath,stid))
 		remove_file("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
@@ -1722,6 +1876,10 @@ class Pitch_Objects(bpy.types.Operator):
 		else:
 			self.report({"WARNING"}, "Stadium ID isn't correct!!")
 			return {'CANCELLED'}
+		checks=checkStadiumID(context, True)
+		if checks:
+			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			return {'CANCELLED'}
 		assetDirname = "/Assets/pes16/model/bg/{0}/scenes/pitch_{1}.fmdl".format(stid,stid)
 		assetDir = "{0}pitch\\#Win\\pitch_{1}_fpk\\Assets\\pes16\\model\\bg\\{2}\\scenes\\".format(exportPath,stid,stid)
 		fpkdPath="pitch\\#Win\\pitch_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\pitch".format(stid,stid)
@@ -1732,8 +1890,8 @@ class Pitch_Objects(bpy.types.Operator):
 						for ob2 in bpy.data.objects[ob.name].children[:1]:
 							if ob2 is not None:
 								print('\n********************************')
-								makedir("pitch\\#Win\\pitch_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid))
-								makedir(fpkdPath)
+								makedir("pitch\\#Win\\pitch_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
+								makedir(fpkdPath,True)
 								objName = child.name
 								fileName = "{0}pitch_{1}.fmdl".format(assetDir, stid)
 								meshID = str(fileName).split('..')[0].split('\\')[-1:][0]
@@ -1760,6 +1918,88 @@ class Pitch_Objects(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
+class ExportStadium_AD(bpy.types.Operator):
+
+	"""Export Adboard of STadium"""
+	bl_idname = "export_ad.operator"
+	bl_label = str()
+
+	@classmethod
+	def poll(cls, context):
+		return (context.mode == "OBJECT")
+	
+	def execute(self, context):
+		stid=context.scene.STID
+		exportPath=context.scene.export_path
+		reports(self, context)
+		if context.scene.isActive:
+			self.report({"WARNING"}, context.scene.report_msg)
+			context.scene.report_msg = str()
+			context.scene.isActive = False
+			return {'CANCELLED'}
+
+		if len(stid) == 5:
+			if context.scene.export_path == str():
+				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+
+			if not stid in context.scene.export_path:
+				self.report({"WARNING"}, "Stadium ID doesn't match!!")
+				print("Stadium ID doesn't match!!")
+				return {'CANCELLED'}
+
+			if not context.scene.export_path.endswith(stid+"\\"):
+				self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+		else:
+			self.report({"WARNING"}, "Stadium ID isn't correct!!")
+			return {'CANCELLED'}
+		checks=checkStadiumID(context, True)
+		if checks:
+			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			return {'CANCELLED'}
+	
+		for child in bpy.data.objects[context.scene.part_info].children:
+			if child.type == 'EMPTY' and child is not None:
+				for ob in bpy.data.objects[child.name].children[:1]:
+					if ob is not None:
+						for ob2 in bpy.data.objects[ob.name].children[:1]:
+							if ob2 is not None:
+								objName = child.name
+								adName,adType=str(objName).split('_')[0],str(objName).split('_')[1]
+								fmdlName="{0}_{1}_{2}.fmdl".format(adName,stid,adType)
+								assetDirname = "/Assets/pes16/model/bg/common/ad/scenes/%s"%fmdlName
+								assetDirnameFox2 = "/Assets/pes16/model/bg/common/ad/ad_{0}_{1}.fox2".format(stid,adType)
+								assetDir = "{0}common\\ad\\#Win\\ad_{1}_{2}_fpk\\Assets\\pes16\\model\\bg\\common\\ad\\scenes\\".format(exportPath[:-6],stid,adType)
+								fpkPath="common\\ad\\#Win\\ad_{0}_{1}_fpk\\Assets\\pes16\\model\\bg\\common\\ad\\scenes".format(stid,adType)
+								fpkdPath="common\\ad\\#Win\\ad_{0}_{1}_fpkd\\Assets\\pes16\\model\\bg\\common\\ad".format(stid,adType)
+								makeXML("{0}common\\ad\\#Win\\ad_{1}_{2}.fpk.xml".format(exportPath[:-6], stid,adType), assetDirname, "ad_{0}_{1}.fpk".format(stid,adType),"Fpk","FpkFile", False)
+								makeXML("{0}common\\ad\\#Win\\ad_{1}_{2}.fpkd.xml".format(exportPath[:-6], stid,adType), assetDirnameFox2, "ad_{0}_{1}.fpkd".format(stid,adType),"Fpk","FpkFile", False)
+								print('\n********************************')
+								makedir(fpkPath,False)		
+								makedir(fpkdPath,False)		
+								fileName = assetDir +fmdlName
+								meshID = fmdlName
+								print("Exporting ==> %s"%fmdlName)
+								print('********************************\n')
+								export_fmdl(self, context, fileName, meshID, objName)
+								pack_unpack_Fpk("{0}common\\ad\\#Win\\ad_{1}_{2}.fpk.xml".format(exportPath[:-6], stid,adType))
+								remove_dir("{0}common\\ad\\#Win\\ad_{1}_{2}_fpk".format(exportPath[:-6], stid,adType))
+								remove_file("{0}common\\ad\\#Win\\ad_{1}_{2}.fpk.xml".format(exportPath[:-6], stid,adType))
+								adfpkd=open(xml_dir+"StadiumAd.xml", "rt").read()
+								adfpkd=adfpkd.replace("assetPath",assetDirname)
+								adfpkd=adfpkd.replace("adType",adType)
+								Writeadfpkd=open(exportPath[:-6]+fpkdPath+"\\ad_{0}_{1}.fox2.xml".format(stid,adType), "wt")
+								Writeadfpkd.write(adfpkd)
+								Writeadfpkd.flush(),Writeadfpkd.close()
+								compileXML(exportPath[:-6]+fpkdPath+"\\ad_{0}_{1}.fox2.xml".format(stid,adType))
+								pack_unpack_Fpk("{0}common\\ad\\#Win\\ad_{1}_{2}.fpkd.xml".format(exportPath[:-6], stid,adType))
+								remove_dir("{0}common\\ad\\#Win\\ad_{1}_{2}_fpkd".format(exportPath[:-6], stid,adType))
+								remove_file("{0}common\\ad\\#Win\\ad_{1}_{2}.fpkd.xml".format(exportPath[:-6], stid,adType))
+		self.report({"INFO"}, "Exporting Stadium ad succesfully...!")
+		return {'FINISHED'}
 
 class Export_TV(bpy.types.Operator):
 	"""Export TV"""
@@ -1799,6 +2039,10 @@ class Export_TV(bpy.types.Operator):
 		else:
 			self.report({"WARNING"}, "Stadium ID isn't correct!!")
 			return {'CANCELLED'}
+		checks=checkStadiumID(context, False)
+		if checks:
+			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			return {'CANCELLED'}
 		TvOb,files,TvMdl,addrs=[],[],[],[]
 		arraySize,TvBoxSize,TvLineSize=0,0,0
 		tvlist=["tv_%s_large_back.fmdl"%stid,
@@ -1825,8 +2069,8 @@ class Export_TV(bpy.types.Operator):
 							TvBoxSize+=1
 						if "_Small" in fmdlName:
 							TvLineSize+=1
-						makedir("tv\\#Win\\tv_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid))
-						makedir("tv\\#Win\\tv_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\tv".format(stid,stid))
+						makedir("tv\\#Win\\tv_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
+						makedir("tv\\#Win\\tv_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\tv".format(stid,stid),True)
 						addr=str.upper(hex(tvdatalist[TvOb.index(fmdlName)]))
 						if len(addr) == 9:
 							addr=addr.replace("0X","0x0")
@@ -1857,7 +2101,7 @@ class Export_TV(bpy.types.Operator):
 		self.report({"INFO"}, "Exporting TV succesfully...!")
 		return {'FINISHED'}
 	pass
-
+import time
 class Convert_OT(bpy.types.Operator):
 	"""Export and Convert all texture to FTEX"""
 	bl_idname = "convert.operator"
@@ -1868,50 +2112,143 @@ class Convert_OT(bpy.types.Operator):
 		return context.mode == "OBJECT"
 
 	def execute(self, context):
-	
-		ob = context.active_object	
-		for img in bpy.data.images:
-			if not img.users:
-				bpy.data.images.remove(img)
-			else:
-				filePath = img.filepath
-				fileName = str(filePath).split('..')[0].split('\\')[-1:][0]
-				inPath = fileName
-				dirpath = os.path.dirname(filePath)
-				outpath = context.scene.export_path+"sourceimages\\tga\\#windx11"
-				if context.scene.export_path == str():
-					self.report({"WARNING"}, "Export path can't be empty!!")
-					print("Export path can't be empty!!")
-					return {'CANCELLED'}
-				filenames, extension = os.path.splitext(fileName)
-				if extension !=str():
-					if extension.lower() == '.png':
-						fileName = filenames + extension
-						PNGPath = os.path.join(dirpath, fileName)
-						texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-						newPath = os.path.join(dirpath, filenames+".dds")
-						inPath = newPath
-					elif extension.lower() == '.tga':
-						fileName = filenames + extension
-						TGAPath = os.path.join(dirpath, fileName)
-						texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-						newPath = os.path.join(dirpath, filenames+".dds")
-						inPath = newPath
-					elif extension.lower() == '.dds':
-						if os.path.isfile(filePath):
-							convert_dds(filePath, outpath)
-							print("Converting texture {0} ==> {1}ftex ".format(fileName,fileName[:-3]))
-					else:
-						self.report({"WARNING"}, "Not support texture format check in System Console!!")
-						print("\nNot support texture format!!, Texture must .PNG .DDS .TGA")
-						print("Convertion Failed !! (File Not Found or Unsupported Type)")
-						print("\nCheck out Object ==> %s" %ob.parent.name+' -> '+ob.name)
-						return {'CANCELLED'}
-					if os.path.isfile(inPath):
-						convert_dds(inPath, outpath)
-						print("Converting texture {0} ==> {1}ftex ".format(fileName,fileName[:-3]))
-						os.remove(inPath)
+		start_time = time.time()
+		stid=context.scene.STID
+		reports(self, context)
+		if context.scene.isActive:
+			self.report({"WARNING"}, context.scene.report_msg)
+			context.scene.report_msg = str()
+			context.scene.isActive = False
+			return {'CANCELLED'}
 
+		if len(stid) == 5:
+			if context.scene.export_path == str():
+				self.report({"WARNING"}, "Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+
+			if not stid in context.scene.export_path:
+				self.report({"WARNING"}, "Stadium ID doesn't match!!")
+				print("Stadium ID doesn't match!!")
+				return {'CANCELLED'}
+
+			if not context.scene.export_path.endswith(stid+"\\"):
+				self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				return {'CANCELLED'}
+		else:
+			self.report({"WARNING"}, "Stadium ID isn't correct!!")
+			return {'CANCELLED'}
+		checks=checkStadiumID(context, True)
+		if checks:
+			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			return {'CANCELLED'}
+		outpath = context.scene.export_path+"sourceimages\\tga\\#windx11"
+		for img in bpy.data.images:
+			try:
+				remove_file(outpath+"\\"+img.name[:-3]+"ftex")
+			except:
+				pass
+		for child in bpy.data.objects[context.scene.part_info].children:
+			if child.type == 'EMPTY' and child is not None:
+				for ob in bpy.data.objects[child.name].children[:1]:
+					if ob is not None:
+						for ob2 in bpy.data.objects[ob.name].children:
+							if ob2 is not None and  ob2.type == "MESH":
+								blenderMaterial = bpy.data.objects[ob2.name].active_material
+								for nodes in blenderMaterial.node_tree.nodes:
+									if nodes.type == "TEX_IMAGE":
+										filePath = nodes.image.filepath
+										fileName = str(filePath).split('..')[0].split('\\')[-1:][0]
+										#Only convert texture not available in output directory convert faster
+										if not os.path.isfile(outpath+"\\"+fileName[:-3]+"ftex") and context.scene.convertMode:
+											inPath = fileName
+											dirpath = os.path.dirname(filePath)
+											if context.scene.export_path == str():
+												self.report({"WARNING"}, "Export path can't be empty!!")
+												print("Export path can't be empty!!")
+												return {'CANCELLED'}
+											filenames, extension = os.path.splitext(fileName)
+											if extension !=str():
+												if extension.lower() == '.png':
+													fileName = filenames + extension
+													PNGPath = os.path.join(dirpath, fileName)
+													texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+													newPath = os.path.join(dirpath, filenames+".dds")
+													inPath = newPath
+												elif extension.lower() == '.tga':
+													fileName = filenames + extension
+													TGAPath = os.path.join(dirpath, fileName)
+													texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+													newPath = os.path.join(dirpath, filenames+".dds")
+													inPath = newPath
+												elif extension.lower() == '.dds':
+													if os.path.isfile(filePath):
+														convert_dds(filePath, outpath)
+														print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
+												else:
+													self.report({"WARNING"}, "Not support texture format check in System Console!!")
+													print("\nNot support texture format!!, Texture must .PNG .DDS .TGA")
+													print("Convertion Failed !! (File Not Found or Unsupported Type)")
+													print("**"*len(filenames+extension))
+													print("File ("+filenames+extension+") is not right texture format!!")
+													print("**"*len(filenames+extension))
+													print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node({4})"
+													.format(context.scene.part_info, ob.parent.name, ob2.parent.name, ob2.name, nodes.name))
+													return {'CANCELLED'}
+												if os.path.isfile(inPath):
+													convert_dds(inPath, outpath)
+													print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
+													try:
+														os.remove(inPath)
+													except Exception as msg:
+														self.report({"INFO"}, format(msg))
+														return {'CANCELLED'}
+										#Replace texture to output directory each texture assign in nodes but make convert slower
+										if context.scene.convertMode==False:
+											inPath = fileName
+											dirpath = os.path.dirname(filePath)
+											if context.scene.export_path == str():
+												self.report({"WARNING"}, "Export path can't be empty!!")
+												print("Export path can't be empty!!")
+												return {'CANCELLED'}
+											filenames, extension = os.path.splitext(fileName)
+											if extension !=str():
+												if extension.lower() == '.png':
+													fileName = filenames + extension
+													PNGPath = os.path.join(dirpath, fileName)
+													texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+													newPath = os.path.join(dirpath, filenames+".dds")
+													inPath = newPath
+												elif extension.lower() == '.tga':
+													fileName = filenames + extension
+													TGAPath = os.path.join(dirpath, fileName)
+													texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+													newPath = os.path.join(dirpath, filenames+".dds")
+													inPath = newPath
+												elif extension.lower() == '.dds':
+													if os.path.isfile(filePath):
+														convert_dds(filePath, outpath)
+														print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
+												else:
+													self.report({"WARNING"}, "Not support texture format check in System Console!!")
+													print("\nNot support texture format!!, Texture must .PNG .DDS .TGA")
+													print("Convertion Failed !! (File Not Found or Unsupported Type)")
+													print("**"*len(filenames+extension))
+													print("File ("+filenames+extension+") is not right texture format!!")
+													print("**"*len(filenames+extension))
+													print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node({4})"
+													.format(context.scene.part_info, ob.parent.name, ob2.parent.name, ob2.name, nodes.name))
+													return {'CANCELLED'}
+												if os.path.isfile(inPath):
+													convert_dds(inPath, outpath)
+													print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
+													try:
+														os.remove(inPath)
+													except Exception as msg:
+														self.report({"INFO"}, format(msg))
+														return {'CANCELLED'}
+		print("--- %s seconds ---" % (time.time() - start_time))
 		self.report({"INFO"}, "Converting texture succesfully...!")
 		print("Converting texture succesfully...!")
 		return {'FINISHED'}
@@ -2113,11 +2450,15 @@ class FMDL_Scene_Open_Image(bpy.types.Operator, bpy_extras.io_utils.ImportHelper
 			image = bpy.data.images.load(filepath=filePath)
 			bpy.data.materials[mat_name].node_tree.nodes[node_name].image = image
 		filenames = os.path.splitext(fileName)[0]
+		blenderImage=bpy.data.images[fileName]
 		fileName = filenames + '.tga'
 		bpy.data.materials[mat_name].node_tree.nodes[node_name].image.alpha_mode = 'NONE'
 		bpy.data.materials[mat_name].node_tree.nodes[node_name].fmdl_texture_filename = fileName
 		bpy.data.materials[mat_name].node_tree.nodes[node_name].label = fileName
-		
+		textureRole = bpy.data.materials[mat_name].node_tree.nodes[node_name].fmdl_texture_role
+		blenderImage.colorspace_settings.name = 'Non-Color'		
+		if 'Base_Tex_SRGB' in textureRole or 'Base_Tex_LIN' in textureRole:
+			blenderImage.colorspace_settings.name = 'sRGB'
 		self.report({"INFO"}, "Add texture [%s] succesfully!" % filenames)
 		print("Add texture [%s] succesfully!" % filenames)
 		return {'FINISHED'}
@@ -2133,8 +2474,8 @@ class FMDL_Externally_Edit(bpy.types.Operator):
 
 	def execute(self, context):
 		mat_name = bpy.context.active_object.active_material.name
-		node_name = bpy.context.active_node
-		texname = bpy.data.materials[mat_name].node_tree.nodes[node_name.name]
+		node_name = bpy.context.active_node.name
+		texname = bpy.data.materials[mat_name].node_tree.nodes[node_name]
 		imagePath = str()
 		try:
 			for img in bpy.data.images:
@@ -2237,6 +2578,8 @@ classes = [
 	TV_Objects,
 	Pitch_Objects,
 	Staff_Coach_Pos,
+	New_STID,
+	ExportStadium_AD,
 
 	PES_21_PT_CrowdSection,
 	PES_21_OT_assign_crowd_type,
@@ -2287,6 +2630,7 @@ def register():
 	bpy.types.Scene.fmdl_import_load_textures = BoolProperty(name="Load textures", default=True)
 	bpy.types.Scene.fmdl_import_all_bounding_boxes = BoolProperty(name="Import all bounding boxes", default=False)
 	bpy.types.Scene.fixmeshesmooth = BoolProperty(name="FIX-Smooth Meshes", default=True)
+	bpy.types.Scene.convertMode = BoolProperty(name="Skip Existing", default=True)
 
 	bpy.types.Scene.crowd_row_space = FloatProperty(name=" ",step=1,subtype='FACTOR',default=5.0,min=0.0,max=10.0,description="Set a value for vertical space of seat rows. (Default: 5.00)")   
 	bpy.types.Object.droplist = EnumProperty(name="Parent List", items=parentlist)

@@ -573,7 +573,6 @@ def exportFmdl(context, rootObjectName, exportSettings=None):
 				yield slot
 		else:
 			return None
-
 	def exportMaterial(blenderMaterial, textureFmdlObjects):
 		
 		materialInstance = FmdlFile.FmdlFile.MaterialInstance()
@@ -920,10 +919,7 @@ def exportFmdl(context, rootObjectName, exportSettings=None):
 			colorLayer = None
 			vertexFields.hasColor = False
 		elif len(blenderMesh.vertex_colors) == 1:
-			colorLayer = None
-			vertexFields.hasColor = False
-		elif len(blenderMesh.vertex_colors) == 2:
-			colorLayer = 1
+			colorLayer = 0
 			vertexFields.hasColor = True
 		else:
 			raise FmdlExportError("Mesh '%s' has more than one color layer." % name)
