@@ -27,6 +27,7 @@ Thanks to the following people who have contributed to this project:
 * [the4chancup](https://github.com/the4chancup)
 * [Atvaark](https://github.com/Atvaark)
 * [Suat Cadgas/sxsxsx](https://evo-web.co.uk/members/sxsxsx.76315/)
+* [themex](https://evo-web.co.uk/members/themex.302390/)
 
 #### Credits:
 
@@ -39,6 +40,7 @@ Thanks to the following people who have contributed to this project:
 > * [the4chancup](https://github.com/the4chancup)
 > * [Atvaark](https://github.com/Atvaark)
 > * [Suat Cadgas/sxsxsx](https://evo-web.co.uk/members/sxsxsx.76315/)
+> * [themex](https://evo-web.co.uk/members/themex.302390/)
 
 
 ## License
