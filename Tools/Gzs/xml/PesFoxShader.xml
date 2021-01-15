@@ -76,9 +76,6 @@ These are some of the original shaders from KONAMI: https://pastebin.com/raw/Cpz
 		<Parameter textures="MetalnessMap_Tex_LIN"/>
 		<Parameter vector="MatParamIndex_0" xValue="29" yValue="0" zValue="0" wValue="0"/>
     </FoxShader>
-	<FoxShader shader="pes_3dfw_eyeocclusion" technique="pes3DFW_EyeOcclusion">
-		<Parameter textures="Base_Tex_SRGB"/>
-    </FoxShader>
 	<FoxShader shader="fox_3ddf_ggx_nrmuv" technique="fox3DDF_GGX">
 		<Parameter textures="Base_Tex_SRGB"/>
 		<Parameter textures="NormalMap_Tex_NRM"/>
@@ -240,6 +237,47 @@ These are some of the original shaders from KONAMI: https://pastebin.com/raw/Cpz
 		<Parameter textures="Layer_Tex_SRGB"/>
 		<Parameter textures="LayerMask_Tex_LIN"/>
 		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="URepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VRepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="UShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+    </FoxShader>
+	<FoxShader shader="fox3ddf_blin_layerb_subnm_mu" technique="fox3DDF_Blin_LayerBl_SubNorm_MaskUV">
+		<Parameter textures="Base_Tex_SRGB"/>
+		<Parameter textures="NormalMap_Tex_NRM"/>
+		<Parameter textures="SpecularMap_Tex_LIN"/>
+		<Parameter textures="Layer_Tex_SRGB"/>
+		<Parameter textures="LayerMask_Tex_LIN"/>
+		<Parameter textures="SubNormalMap_Tex_NRM"/>
+		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_1" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_2" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_3" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="URepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VRepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="UShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="SubNormal_Blend" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="URepeat_SubNorm_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VRepeat_SubNorm_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+    </FoxShader>
+	<FoxShader shader="fox3ddf_blin_3mt" technique="fox3DDF_Blin_3MT">
+		<Parameter textures="Base_Tex_SRGB"/>
+		<Parameter textures="NormalMap_Tex_NRM"/>
+		<Parameter textures="SpecularMap_Tex_LIN"/>
+		<Parameter textures="MatParamMap_Tex_LIN"/>
+		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_1" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_2" xValue="0" yValue="0" zValue="0" wValue="0"/>
+    </FoxShader>
+	<FoxShader shader="fox3ddf_blin_subnorm" technique="fox3DDF_Blin_SubNorm">
+		<Parameter textures="Base_Tex_SRGB"/>
+		<Parameter textures="NormalMap_Tex_NRM"/>
+		<Parameter textures="SpecularMap_Tex_LIN"/>
+		<Parameter textures="SubNormalMap_Tex_NRM"/>
+		<Parameter textures="SubNormalMask_Tex_LIN"/>
+		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="SubNormal_Blend" xValue="0" yValue="0" zValue="0" wValue="0"/>
 		<Parameter vector="URepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
 		<Parameter vector="VRepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
 		<Parameter vector="UShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
