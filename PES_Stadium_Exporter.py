@@ -8,7 +8,7 @@ from xml.dom.minidom import parse
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"author": "the4chancup - MjTs-140914",
-	"version": (0, 2, 0),
+	"version": (0, 3, 0),
 	"blender": (2, 80, 0),
 	"api": 35853,
 	"location": "Under Scene Tab",
@@ -22,7 +22,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.2.0a"
+myver="v0.3.0a"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -868,12 +868,11 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 				row.label(text="Stadium Export", icon="INFO")
 				row = box.row()
 				row.operator("convert.operator", text="Export Texture", icon="NODE_TEXTURE")
-				if scn.convertMode:
-					txt="Convert as Faster"
+				if scn.useFastConvertTexture:
+					txt = "Skip Non-Modified textures"
 				else:
-					txt="Convert as Slower"
-				row.prop(scn, "convertMode", text=txt)
-				#row.operator("clear_temp.operator", text="", icon="MOD_EXPLODE").opname = "cleartempdata"
+					txt = "Convert All textures"
+				row.prop(scn, "useFastConvertTexture", text=txt)
 				row.operator("clear_temp.operator", text="", icon="TRASH").opname = "cleartempdata"
 				row = box.row()
 				row.operator("export_stadium.operator", text="EXPORT STADIUM", icon="EXPORT")
@@ -2101,7 +2100,7 @@ class Export_TV(bpy.types.Operator):
 		self.report({"INFO"}, "Exporting TV succesfully...!")
 		return {'FINISHED'}
 	pass
-import time
+
 class Convert_OT(bpy.types.Operator):
 	"""Export and Convert all texture to FTEX"""
 	bl_idname = "convert.operator"
@@ -2112,8 +2111,7 @@ class Convert_OT(bpy.types.Operator):
 		return context.mode == "OBJECT"
 
 	def execute(self, context):
-		start_time = time.time()
-		stid=context.scene.STID
+		stid = context.scene.STID
 		reports(self, context)
 		if context.scene.isActive:
 			self.report({"WARNING"}, context.scene.report_msg)
@@ -2132,126 +2130,104 @@ class Convert_OT(bpy.types.Operator):
 				print("Stadium ID doesn't match!!")
 				return {'CANCELLED'}
 
-			if not context.scene.export_path.endswith(stid+"\\"):
+			if not context.scene.export_path.endswith(stid + "\\"):
 				self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 				print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 				return {'CANCELLED'}
 		else:
 			self.report({"WARNING"}, "Stadium ID isn't correct!!")
 			return {'CANCELLED'}
-		checks=checkStadiumID(context, True)
+		checks = checkStadiumID(context, True)
 		if checks:
-			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
+			self.report({"WARNING"}, "Stadium ID doesn't match, see more info => Window -> Toggle System Console")
 			return {'CANCELLED'}
-		outpath = context.scene.export_path+"sourceimages\\tga\\#windx11"
-		for img in bpy.data.images:
-			try:
-				remove_file(outpath+"\\"+img.name[:-3]+"ftex")
-			except:
-				pass
+		bpy.ops.file.make_paths_absolute()
+		isConvertedDict = {}
+		isConvertedDict.clear()
+		outpath = context.scene.export_path + "sourceimages\\tga\\#windx11"
 		for child in bpy.data.objects[context.scene.part_info].children:
 			if child.type == 'EMPTY' and child is not None:
 				for ob in bpy.data.objects[child.name].children[:1]:
 					if ob is not None:
 						for ob2 in bpy.data.objects[ob.name].children:
-							if ob2 is not None and  ob2.type == "MESH":
+							if ob2 is not None and ob2.type == "MESH":
 								blenderMaterial = bpy.data.objects[ob2.name].active_material
 								for nodes in blenderMaterial.node_tree.nodes:
 									if nodes.type == "TEX_IMAGE":
 										filePath = nodes.image.filepath
 										fileName = str(filePath).split('..')[0].split('\\')[-1:][0]
-										#Only convert texture not available in output directory convert faster
-										if not os.path.isfile(outpath+"\\"+fileName[:-3]+"ftex") and context.scene.convertMode:
-											inPath = fileName
-											dirpath = os.path.dirname(filePath)
-											if context.scene.export_path == str():
-												self.report({"WARNING"}, "Export path can't be empty!!")
-												print("Export path can't be empty!!")
+										ftexFile = outpath + "\\" + fileName[:-3] + "ftex"
+
+										if fileName in isConvertedDict.keys():
+											if not isConvertedDict[fileName]:
+												isConvertedDict[fileName] = True
+											else:
+												continue
+										else:
+											isConvertedDict[fileName] = False
+
+										# If using skip non-modified, it will be checked here
+										# otherwise it will convert every texture anyway
+										if context.scene.useFastConvertTexture:
+											if os.path.isfile(ftexFile):
+												# if ftex file exists and original texture was not modified, skip it
+												if not os.path.getmtime(ftexFile) < os.path.getmtime(filePath):
+													continue
+										# if you reach here it means the old ftex file is going to be replaced,
+										# so it will get removed first
+										try:
+											remove_file(ftexFile)
+										except:
+											pass
+
+										inPath = fileName
+										dirpath = os.path.dirname(filePath)
+										if context.scene.export_path == str():
+											self.report({"WARNING"}, "Export path can't be empty!!")
+											print("Export path can't be empty!!")
+											return {'CANCELLED'}
+										filenames, extension = os.path.splitext(fileName)
+										if extension != str():
+											if extension.lower() == '.png':
+												fileName = filenames + extension
+												PNGPath = os.path.join(dirpath, fileName)
+												texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+												newPath = os.path.join(dirpath, filenames + ".dds")
+												inPath = newPath
+											elif extension.lower() == '.tga':
+												fileName = filenames + extension
+												TGAPath = os.path.join(dirpath, fileName)
+												texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
+												newPath = os.path.join(dirpath, filenames + ".dds")
+												inPath = newPath
+											elif extension.lower() == '.dds':
+												inPath = filePath
+											else:
+												self.report({"WARNING"}, "Not supported texture format, check in Blender Console => Window -> Toggle System Console !!")
+												print("\nNot supported texture format!!, Texture format must be .PNG .DDS .TGA")
+												print("Conversion Failed !! (File Not Found or Unsupported format)")
+												print("**" * len(filenames + extension))
+												print("File (" + filenames + extension + ") isn't the right texture format!!")
+												print("**" * len(filenames + extension))
+												print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node({4})"
+														.format(context.scene.part_info, ob.parent.name,ob2.parent.name, ob2.name, nodes.name))
 												return {'CANCELLED'}
-											filenames, extension = os.path.splitext(fileName)
-											if extension !=str():
-												if extension.lower() == '.png':
-													fileName = filenames + extension
-													PNGPath = os.path.join(dirpath, fileName)
-													texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-													newPath = os.path.join(dirpath, filenames+".dds")
-													inPath = newPath
-												elif extension.lower() == '.tga':
-													fileName = filenames + extension
-													TGAPath = os.path.join(dirpath, fileName)
-													texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-													newPath = os.path.join(dirpath, filenames+".dds")
-													inPath = newPath
-												elif extension.lower() == '.dds':
-													if os.path.isfile(filePath):
-														convert_dds(filePath, outpath)
-														print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
-												else:
-													self.report({"WARNING"}, "Not support texture format check in System Console!!")
-													print("\nNot support texture format!!, Texture must .PNG .DDS .TGA")
-													print("Convertion Failed !! (File Not Found or Unsupported Type)")
-													print("**"*len(filenames+extension))
-													print("File ("+filenames+extension+") is not right texture format!!")
-													print("**"*len(filenames+extension))
-													print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node({4})"
-													.format(context.scene.part_info, ob.parent.name, ob2.parent.name, ob2.name, nodes.name))
-													return {'CANCELLED'}
-												if os.path.isfile(inPath):
-													convert_dds(inPath, outpath)
-													print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
+											if os.path.isfile(inPath):
+												convert_dds(inPath, outpath)
+												print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(
+														ob2.name, nodes.name, fileName, fileName[:-3]))
+												# if the original texture was .dds itself, no need to delete it
+												# otherwise, it was the temp texture we made, so it will be deleted
+												if extension.lower() != '.dds':
 													try:
 														os.remove(inPath)
 													except Exception as msg:
 														self.report({"INFO"}, format(msg))
 														return {'CANCELLED'}
-										#Replace texture to output directory each texture assign in nodes but make convert slower
-										if context.scene.convertMode==False:
-											inPath = fileName
-											dirpath = os.path.dirname(filePath)
-											if context.scene.export_path == str():
-												self.report({"WARNING"}, "Export path can't be empty!!")
-												print("Export path can't be empty!!")
-												return {'CANCELLED'}
-											filenames, extension = os.path.splitext(fileName)
-											if extension !=str():
-												if extension.lower() == '.png':
-													fileName = filenames + extension
-													PNGPath = os.path.join(dirpath, fileName)
-													texconv(PNGPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-													newPath = os.path.join(dirpath, filenames+".dds")
-													inPath = newPath
-												elif extension.lower() == '.tga':
-													fileName = filenames + extension
-													TGAPath = os.path.join(dirpath, fileName)
-													texconv(TGAPath, dirpath, " -r -y -l -f DXT5 -ft dds -srgb -o ", False)
-													newPath = os.path.join(dirpath, filenames+".dds")
-													inPath = newPath
-												elif extension.lower() == '.dds':
-													if os.path.isfile(filePath):
-														convert_dds(filePath, outpath)
-														print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
-												else:
-													self.report({"WARNING"}, "Not support texture format check in System Console!!")
-													print("\nNot support texture format!!, Texture must .PNG .DDS .TGA")
-													print("Convertion Failed !! (File Not Found or Unsupported Type)")
-													print("**"*len(filenames+extension))
-													print("File ("+filenames+extension+") is not right texture format!!")
-													print("**"*len(filenames+extension))
-													print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node({4})"
-													.format(context.scene.part_info, ob.parent.name, ob2.parent.name, ob2.name, nodes.name))
-													return {'CANCELLED'}
-												if os.path.isfile(inPath):
-													convert_dds(inPath, outpath)
-													print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(ob2.name, nodes.name, fileName,fileName[:-3]))
-													try:
-														os.remove(inPath)
-													except Exception as msg:
-														self.report({"INFO"}, format(msg))
-														return {'CANCELLED'}
-		print("--- %s seconds ---" % (time.time() - start_time))
 		self.report({"INFO"}, "Converting texture succesfully...!")
 		print("Converting texture succesfully...!")
 		return {'FINISHED'}
+
 	pass
 
 class Clear_OT(bpy.types.Operator):
@@ -2475,14 +2451,7 @@ class FMDL_Externally_Edit(bpy.types.Operator):
 	def execute(self, context):
 		mat_name = bpy.context.active_object.active_material.name
 		node_name = bpy.context.active_node.name
-		texname = bpy.data.materials[mat_name].node_tree.nodes[node_name]
-		imagePath = str()
-		try:
-			for img in bpy.data.images:
-				if texname.label[:-4] in img.name:
-					imagePath = bpy.data.images[img.name].filepath
-		except:
-			pass
+		imagePath = bpy.data.materials[mat_name].node_tree.nodes[node_name].image.filepath
 		if os.path.isfile(imagePath):
 			try:
 				bpy.ops.image.external_edit(filepath=imagePath)
@@ -2630,7 +2599,7 @@ def register():
 	bpy.types.Scene.fmdl_import_load_textures = BoolProperty(name="Load textures", default=True)
 	bpy.types.Scene.fmdl_import_all_bounding_boxes = BoolProperty(name="Import all bounding boxes", default=False)
 	bpy.types.Scene.fixmeshesmooth = BoolProperty(name="FIX-Smooth Meshes", default=True)
-	bpy.types.Scene.convertMode = BoolProperty(name="Skip Existing", default=True)
+	bpy.types.Scene.useFastConvertTexture = BoolProperty(name="Skip Non-Modified textures", default=True)
 
 	bpy.types.Scene.crowd_row_space = FloatProperty(name=" ",step=1,subtype='FACTOR',default=5.0,min=0.0,max=10.0,description="Set a value for vertical space of seat rows. (Default: 5.00)")   
 	bpy.types.Object.droplist = EnumProperty(name="Parent List", items=parentlist)
