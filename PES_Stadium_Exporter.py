@@ -8,7 +8,7 @@ from xml.dom.minidom import parse
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"author": "the4chancup - MjTs-140914",
-	"version": (0, 3, 0),
+	"version": (0, 4, 0),
 	"blender": (2, 80, 0),
 	"api": 35853,
 	"location": "Under Scene Tab",
@@ -22,7 +22,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.3.0a"
+myver="v0.4.0a"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -974,8 +974,8 @@ class Staff_Coach_Pos(bpy.types.Operator):
 			Create_Parent_Part(self, context)
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+				print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -996,17 +996,17 @@ class Staff_Coach_Pos(bpy.types.Operator):
 			for ob in bpy.data.objects:
 				if ob.type == "MESH":
 					if ob.name == "coach_home":
-						bpy.data.objects[ob.name].rotation_mode = "QUATERNION"
-						bpy.data.objects[ob.name].rotation_quaternion[0] = -0.007337
-						bpy.data.objects[ob.name].rotation_quaternion[3] = -0.999973
-						bpy.data.objects[ob.name].location[0] = -4.893455
-						bpy.data.objects[ob.name].location[1] = 37.3332*-1
+						ob.rotation_mode = "QUATERNION"
+						ob.rotation_quaternion[0] = -0.007337
+						ob.rotation_quaternion[3] = -0.999973
+						ob.location[0] = -4.893455
+						ob.location[1] = 37.3332*-1
 					if ob.name == "coach_away":
-						bpy.data.objects[ob.name].rotation_mode = "QUATERNION"
-						bpy.data.objects[ob.name].rotation_quaternion[0] = -0.007337
-						bpy.data.objects[ob.name].rotation_quaternion[3] = -0.999973
-						bpy.data.objects[ob.name].location[0] = 5.69787
-						bpy.data.objects[ob.name].location[1] = 37.2800179*-1
+						ob.rotation_mode = "QUATERNION"
+						ob.rotation_quaternion[0] = -0.007337
+						ob.rotation_quaternion[3] = -0.999973
+						ob.location[0] = 5.69787
+						ob.location[1] = 37.2800179*-1
 					if ob.name in ['coach_home', 'coach_away']:
 						ob.parent = bpy.data.objects['STAFF']
 			self.report({"INFO"}, "Coach loaded succesfully...")
@@ -1026,16 +1026,17 @@ class Staff_Coach_Pos(bpy.types.Operator):
 				if ob.type == "MESH":
 					if ob.name == "coach_home":
 						bpy.data.objects[ob.name].rotation_mode = "QUATERNION"
-						coachXml=coachXml.replace("q_w_home",str(bpy.data.objects[ob.name].rotation_quaternion[0]))
-						coachXml=coachXml.replace("q_y_home",str(bpy.data.objects[ob.name].rotation_quaternion[3]))
-						coachXml=coachXml.replace("r_x_home",str(bpy.data.objects[ob.name].location[0]))
-						coachXml=coachXml.replace("r_z_home",str(bpy.data.objects[ob.name].location[1]*-1))
+						coachXml=coachXml.replace("q_w_home","{0}".format(ob.rotation_quaternion[0]))
+						coachXml=coachXml.replace("q_y_home","{0}".format(ob.rotation_quaternion[3]))
+						coachXml=coachXml.replace("r_x_home","{0}".format(ob.location[0]))
+						coachXml=coachXml.replace("r_z_home","{0}".format(ob.location[1]*-1))
 					if ob.name == "coach_away":
 						bpy.data.objects[ob.name].rotation_mode = "QUATERNION"
-						coachXml=coachXml.replace("q_w_away",str(bpy.data.objects[ob.name].rotation_quaternion[0]))
-						coachXml=coachXml.replace("q_y_away",str(bpy.data.objects[ob.name].rotation_quaternion[3]))
-						coachXml=coachXml.replace("r_x_away",str(bpy.data.objects[ob.name].location[0]))
-						coachXml=coachXml.replace("r_z_away",str(bpy.data.objects[ob.name].location[1]*-1))	
+						coachXml=coachXml.replace("q_w_away","{0}".format(ob.rotation_quaternion[0]))
+						coachXml=coachXml.replace("q_y_away","{0}".format(ob.rotation_quaternion[3]))
+						coachXml=coachXml.replace("r_x_away","{0}".format(ob.location[0]))
+						coachXml=coachXml.replace("r_z_away","{0}".format(ob.location[1]*-1))	
+
 			writecoachxml=open(xmlPath, "wt")
 			writecoachxml.write(coachXml)
 			writecoachxml.flush(),writecoachxml.close()
@@ -1396,7 +1397,7 @@ def uv_Data(partList, obj_part):
 		bpy.ops.object.mode_set(mode='OBJECT')
 	bpy.ops.object.select_all(action='DESELECT')
 	uvfileWrite.flush(),uvfileWrite.close()
-		
+	
 def crowd_exp(outpath, partList, obj_part):
 	scn = bpy.context.scene
 		
@@ -1411,13 +1412,14 @@ def crowd_exp(outpath, partList, obj_part):
 		mesh=obj.data
 		mesh.update(calc_edges=1, calc_edges_loose=1)	
 		ud=0
-
+		if str(obj.name).split("_")[1][:1] in ["l","r"]:
+			ud=1
 		cr_file.write(pack("6f",bsize[0][0],bsize[0][2],bsize[0][1]*-1,bsize[1][0],bsize[1][2],bsize[1][1]*-1))
 		cr_file.write(pack("I",len(mesh.polygons)))
-
 		for f, face in enumerate(mesh.polygons):
 			vec1,vec2,idx1,idx2,vlist=[],[],[],[],[]
-			v1,v2,row,g=0,0,float(),0x0
+			row,g=float(),0x0
+			v1,v2,v3,v4=0,0,0,0
 			for v in enumerate(face.vertices):
 				uvface = mesh.uv_layers[0].data[face.index]
 				fuv=uvface.uv
@@ -1429,23 +1431,36 @@ def crowd_exp(outpath, partList, obj_part):
 				else:
 					u,w=fuv[0],fuv[1]
 					idx2.append((v[1],u,w))
-					
-				v1 = mesh.vertices[v[1]].co, fuv[0], fuv[1]
-				vlist.append(v1)
+				
 			if len(idx1)==len(idx2):
 				for t in range(0,len(idx1),2):
 					vec1.append((mesh.vertices[idx1[t][0]].co+mesh.vertices[idx1[t+1][0]].co)/2)
+					vec1.append((mesh.vertices[idx1[t][0]].co+mesh.vertices[idx1[t+1][0]].co)/2)
 					vec2.append((mesh.vertices[idx2[t][0]].co+mesh.vertices[idx2[t+1][0]].co)/2)
+					vec2.append((mesh.vertices[idx2[t][0]].co+mesh.vertices[idx2[t+1][0]].co)/2)
+
 				for x in range(0,len(idx1),2):
 					if (mesh.vertices[idx1[x+0][0]].co[ud]) < (vec1[x][ud]):
 						v1=mesh.vertices[idx1[x+0][0]].co,idx1[x+0][1],idx1[x+0][2]
 					else:
 						v1=mesh.vertices[idx1[x+1][0]].co,idx1[x+1][1],idx1[x+1][2]
-					if (mesh.vertices[idx2[x+0][0]].co[ud]) < (vec2[x][ud]):
-						v2=mesh.vertices[idx2[x+0][0]].co,idx2[x+0][1],idx2[x+0][2]
+					if (mesh.vertices[idx1[x+0][0]].co[ud]) > (vec1[x][ud]):
+						v2=mesh.vertices[idx1[x+0][0]].co,idx1[x+0][1],idx1[x+0][2]
 					else:
-						v2=mesh.vertices[idx2[x+1][0]].co,idx2[x+1][1],idx2[x+1][2]
-					row=round((v1[0]-v2[0]).length,1)
+						v2=mesh.vertices[idx1[x+1][0]].co,idx1[x+1][1],idx1[x+1][2]
+					if (mesh.vertices[idx2[x+0][0]].co[ud]) < (vec2[x][ud]):
+						v3=mesh.vertices[idx2[x+0][0]].co,idx2[x+0][1],idx2[x+0][2]
+					else:
+						v3=mesh.vertices[idx2[x+1][0]].co,idx2[x+1][1],idx2[x+1][2]
+					if (mesh.vertices[idx2[x+0][0]].co[ud]) > (vec2[x][ud]):
+						v4=mesh.vertices[idx2[x+0][0]].co,idx2[x+0][1],idx2[x+0][2]
+					else:
+						v4=mesh.vertices[idx2[x+1][0]].co,idx2[x+1][1],idx2[x+1][2]
+					if str(obj.name).split("_")[1][:1] in ["f","r"]:
+						vlist.append(v3),vlist.append(v1),vlist.append(v2),vlist.append(v4)
+					else:
+						vlist.append(v4),vlist.append(v2),vlist.append(v1),vlist.append(v3)
+					row=round((v1[0]-v3[0]).length,1)
 			else:
 				print("Bad Mesh Faces for %s Crowd Part, Fix it before export !!" %obj.name)
 			if scn.part_info == "AUDIAREA":
