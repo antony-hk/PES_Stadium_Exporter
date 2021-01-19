@@ -54,7 +54,7 @@
 					<value>2</value>
 				</property>
 				<property name="direction" type="int32" container="StaticArray" arraySize="1">
-					<value>1</value>
+					<value>DirValue</value>
 				</property>
 				<property name="kind" type="int32" container="StaticArray" arraySize="1">
 					<value>kindValue</value>

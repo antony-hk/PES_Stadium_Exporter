@@ -33,7 +33,7 @@ foxroot=["\n\t</entities>"
 		"\n</fox>"
 ]
 
-def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds):
+def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir):
 	StadiumModel=str()
 	idx1,idx2,idx3=0,0,0
 	stid= bpy.context.scene.STID
@@ -64,6 +64,7 @@ def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlis
 			StadiumModel=StadiumModel.replace("PivotTransAddr",pivotTransformlist[idx2])
 			StadiumModel=StadiumModel.replace("TransformEntityListAddr",TransformEntityList[idx2])
 			StadiumModel=StadiumModel.replace("kindValue","%s"%Stadium_Kinds[idx2])
+			StadiumModel=StadiumModel.replace("DirValue","%s"%Stadium_Dir[idx2])
 			file.write(StadiumModel)
 			idx2+=1
 		for shearTrans in shearTransformlist:
@@ -202,5 +203,109 @@ def makeXMLForTv(filename,TvMdl,arraySize,addrs,assetpath,TvBoxSize,TvLineSize):
 
 		for fr in foxroot:
 			file.write(fr)
+		file.flush(),file.close()
+	return 1
+
+	#Create and generate effect XML contents by object light
+Vignetting=['\n\t<setting type="Vignetting" index="0">'
+    		'\n\t\t<param id="texturePath" type="path" value="/Assets/pes16/model/bg/common/effect/texture/filter/filter.ftex" />'
+    		'\n\t\t<param id="alpha" type="uint" value="0x80" />'
+  			'\n\t</setting>'
+]
+def lightFxXml(filename,sideName,L_Side):
+	scn = bpy.context.scene
+	idx1,idx2,idx3,idx4,idx5,idx6=0,0,0,0,0,0
+	with open(filename, "w", encoding="utf-8") as file:
+		file.write('<?xml version="1.0" encoding="UTF-8"?>')
+		file.write('\n<effect version="2">')
+		if scn.time_mode == "dr" or scn.time_mode == "nr":
+			RainDemo=open(PES_Stadium_Exporter.xml_dir+'effect\\RainDemo.xml','rt').read()
+			file.write(RainDemo)
+		for sd in sideName:
+			LightBillboard=open(PES_Stadium_Exporter.xml_dir+'effect\\LightBillboard.xml','rt').read()
+			LightBillboard=LightBillboard.replace("iSize","%i"%idx1)
+			LightBillboard=LightBillboard.replace("locstar",sd)
+			LightBillboard=LightBillboard.replace("stid",scn.STID)
+			LT = scn.l_fx_tex
+			if LT in ['00','01','04']:
+				LR = '30'
+			else:
+				LR = '45'
+			LightBillboard=LightBillboard.replace("%LT",LT)
+			LightBillboard=LightBillboard.replace("%LR",LR)
+			file.write(LightBillboard)
+			idx1+=1
+		for LFlare in bpy.data.objects['LensFlare'].children:
+			for L_ob in bpy.data.objects[LFlare.name].children:
+				lx,ly,lz=L_ob.location.x,L_ob.location.y*-1,L_ob.location.z
+				L_ob.rotation_mode = "QUATERNION"
+				rw,rx,ry,rz=L_ob.rotation_quaternion.w,L_ob.rotation_quaternion.x*-1,L_ob.rotation_quaternion.y,L_ob.rotation_quaternion.z
+				LensFlare=open(PES_Stadium_Exporter.xml_dir+'effect\\LensFlare.xml','rt').read()
+				LensFlare=LensFlare.replace("%LSize","%i"%idx2)
+				LensFlare=LensFlare.replace("%Ltex","%s"%scn.lensflaretex)
+				LensFlare=LensFlare.replace("%tx","%f"%lx)
+				LensFlare=LensFlare.replace("%ty","%f"%lz)
+				LensFlare=LensFlare.replace("%tz","%f"%ly)
+				LensFlare=LensFlare.replace("%qx","%f"%rx)
+				LensFlare=LensFlare.replace("%qy","%f"%ry)
+				LensFlare=LensFlare.replace("%qz","%f"%rz)
+				LensFlare=LensFlare.replace("%qw","%f"%rw)
+				file.write(LensFlare)
+				idx2+=1
+		for v in Vignetting:
+			file.write(v)
+		for Halo in bpy.data.objects['Halo'].children:
+			for Halo_ob in bpy.data.objects[Halo.name].children:
+				haloSide=str(Halo_ob.parent.name)
+				lx,ly,lz=Halo_ob.location.x,Halo_ob.location.y*-1,Halo_ob.location.z
+				Halo_ob.rotation_mode = "QUATERNION"
+				tex=Halo_ob.HaloTex
+				rw,rx,ry,rz=Halo_ob.rotation_quaternion.w,Halo_ob.rotation_quaternion.x,Halo_ob.rotation_quaternion.y*-1,Halo_ob.rotation_quaternion.z
+				lSize,lSizeY=bpy.data.lights[Halo_ob.data.name].size,bpy.data.lights[Halo_ob.data.name].size_y
+				HaloXml=open(PES_Stadium_Exporter.xml_dir+'effect\\Halo.xml','rt').read()
+				HaloXml=HaloXml.replace("%hTex","%s"%tex)
+				HaloXml=HaloXml.replace("%hSize","%i"%idx5)
+				HaloXml=HaloXml.replace("%tx","%f"%lx)
+				HaloXml=HaloXml.replace("%ty","%f"%lz)
+				HaloXml=HaloXml.replace("%tz","%f"%ly)
+				#Rotation of Halo
+				HaloXml=HaloXml.replace("%qx","%f"%rx)
+				HaloXml=HaloXml.replace("%qz","%f"%ry)
+				HaloXml=HaloXml.replace("%qy","%f"%rz)
+				HaloXml=HaloXml.replace("%qw","%f"%rw)
+				#Size of Halo
+				HaloXml=HaloXml.replace("%Sx","%f"%lSize)
+				HaloXml=HaloXml.replace("%Sy","%f"%lSizeY)
+				HaloXml=HaloXml.replace("%Sz","1.000000")
+				#Fix Rot Y
+				HaloXml=HaloXml.replace("%R","%u"%Halo_ob.rotY)
+				#Pivot of Halo
+				HaloXml=HaloXml.replace("%pvx","%f"%Halo_ob.Pivot.x)
+				HaloXml=HaloXml.replace("%pvy","%f"%Halo_ob.Pivot.y)
+				HaloXml=HaloXml.replace("%pvz","%f"%Halo_ob.Pivot.z)
+				#Color of Halo
+				colorOb=bpy.data.lights[Halo_ob.data.name].color
+				HaloXml=HaloXml.replace("%cR","%f"%colorOb.r)
+				HaloXml=HaloXml.replace("%cG","%f"%colorOb.g)
+				HaloXml=HaloXml.replace("%cB","%f"%colorOb.b)
+				file.write(HaloXml)
+				idx5+=1
+		if scn.time_mode == "dr" or scn.time_mode == "nr":
+			file.write('\n\t<create type="MultiUvScrollScreen" setting="0" />')
+			file.write('\n\t<create type="RainDemo" setting="0" />')
+		for s in L_Side:
+			file.write('\n\t<create type="LightBillboard" setting="%i" floor="upper" dir="%s" />'%(idx3,s))
+			idx3+=1
+		for LFlare in bpy.data.objects['LensFlare'].children:
+			for L_ob in bpy.data.objects[LFlare.name].children:
+				file.write('\n\t<create type="LensFlare" setting="%i" />'%idx4)
+				idx4+=1
+		file.write('\n\t<create type="Vignetting" setting="0" />')
+		for Halo in bpy.data.objects['Halo'].children:
+			for Halo_ob in bpy.data.objects[Halo.name].children:
+				haloSide=str(Halo_ob.parent.name).split('_')[1]
+				file.write('\n\t<create type="Halo" setting="%i" floor="upper" dir="%s" />'% (idx6,haloSide.lower()))
+				idx6+=1
+		file.write('\n</effect>')
 		file.flush(),file.close()
 	return 1

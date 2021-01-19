@@ -8,7 +8,7 @@ from xml.dom.minidom import parse
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"author": "the4chancup - MjTs-140914",
-	"version": (0, 4, 0),
+	"version": (0, 5, 0),
 	"blender": (2, 80, 0),
 	"api": 35853,
 	"location": "Under Scene Tab",
@@ -22,7 +22,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.4.0a"
+myver="v0.5.0b"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -63,8 +63,10 @@ main_list=["back1","back2","back3",
 		   "TV_Large_Left","TV_Large_Right","TV_Large_Front","TV_Large_Back",
 		   "TV_Small_Left","TV_Small_Right","TV_Small_Front","TV_Small_Back",
 		   "L_FRONT","L_RIGHT","L_LEFT","L_BACK",
+		   "H_FRONT","H_RIGHT","H_LEFT","H_BACK",
+		   "F_FRONT","F_RIGHT","F_LEFT","F_BACK",
 		   "ad_acl","ad_cl","ad_el","ad_normal",			 
-		   "ad_olc","ad_sc", 
+		   "ad_olc","ad_sc", "LightBillboard", "LensFlare", "Halo"
 ]
 
 part_export=[("MAIN","MAIN","MAIN"),
@@ -104,20 +106,7 @@ tvdatalist=[0x02D72E00,0x02D730A0,0x02D73340,
 			0x02D73810,
 ]
 
-lfx_tex_list=[("tex_star_00.ftex","00 - tex_star_00","tex_star_00"),
-			  ("tex_star_01.ftex","01 - tex_star_01","tex_star_00"),
-			  ("tex_star_02.ftex","02 - tex_star_02","tex_star_00"),
-			  ("tex_star_03.ftex","03 - tex_star_03","tex_star_00"),
-			  ("tex_star_04.ftex","04 - tex_star_04","tex_star_00"),
-			  ("tex_star_05_alp.ftex","05 - tex_star_05","tex_star_00_alp"),
-			  ("tex_star_07_alp.ftex","07 - tex_star_07","tex_star_00_alp"),
-			  ("tex_star_08_alp.ftex","08 - tex_star_08","tex_star_00_alp")]
-
-light_sidelist=[("L_FRONT","FRONT SIDE","FRONT SIDE"),
-				("L_LEFT","LEFT SIDE","LEFT SIDE"),
-				("L_RIGHT","RIGHT SIDE","RIGHT SIDE"),
-				("L_BACK","BACK SIDE","BACK SIDE")
-]
+light_sidelist=[]
 
 timeMode=[("df","DAY FINE","DAY FINE"),
 		("dr","DAY RAINY","DAY RAINY"),
@@ -142,7 +131,8 @@ parent_list=[('MESH_back1','MESH_back1','MESH_back1'),
 		   ('MESH_right3','MESH_right3','MESH_right3'),
 		   ('MESH_CROWD','MESH_CROWD','MESH_CROWD'),
 		   ('MESH_PITCH','MESH_PITCH','MESH_PITCH'),
-		   ('MESH_TV','MESH_TV','MESH_TV')]
+		   ('MESH_TV','MESH_TV','MESH_TV')
+]
 
 datalist=["back1","back2","back3",
 			"center1","center2","center3",
@@ -169,6 +159,14 @@ StadiumKind=[0,1,2,
 			0,1,2,
 			0,0,
 			14,15
+]
+StadiumDir=[1,1,1,
+			4,4,0,
+			0,0,0,
+			2,2,2,
+			3,3,3,
+			4,4,
+			4,4
 ]
 
 transformlist=[0x02D72C40,0x02D72D20,0x02D72E00,
@@ -222,7 +220,7 @@ crowd_type = {'UltraHome':0.9,
 			  'HeavyAway':0.2999,
 			  'HardcoreAway':0.1999,
 			  'UltraAway':0.0999
-			  }
+}
 
 behavior=[('UltraHome', 'UltraHome', 'UltraHome'),
 		   ('HardcoreHome', 'HardcoreHome', 'HardcoreHome'),
@@ -236,11 +234,67 @@ behavior=[('UltraHome', 'UltraHome', 'UltraHome'),
 		   ('PopAway', 'PopAway', 'PopAway'),
 		   ('HeavyAway', 'HeavyAway', 'HeavyAway'),
 		   ('HardcoreAway', 'HardcoreAway', 'HardcoreAway'),
-		   ('UltraAway', 'UltraAway', 'UltraAway')]
+		   ('UltraAway', 'UltraAway', 'UltraAway')
+]
 
-parentlist=[]
-shaders=[]
+parentlist, shaders=[],[]
 
+L_Side=["back","front","left","right"
+]
+
+L_P_List=["L_BACK",
+			"L_FRONT",
+			"L_LEFT",
+			"L_RIGHT"
+]
+
+lfx_tex_list=[("tex_star_00.ftex","00 - tex_star_00","tex_star_00"),
+			  ("tex_star_01.ftex","01 - tex_star_01","tex_star_01"),
+			  ("tex_star_02.ftex","02 - tex_star_02","tex_star_02"),
+			  ("tex_star_03.ftex","03 - tex_star_03","tex_star_03"),
+			  ("tex_star_04.ftex","04 - tex_star_04","tex_star_04"),
+			  ("tex_star_05_alp.ftex","05 - tex_star_05","tex_star_05_alp"),
+			  ("tex_star_07_alp.ftex","07 - tex_star_07","tex_star_07_alp"),
+			  ("tex_star_08_alp.ftex","08 - tex_star_08","tex_star_08_alp"),
+			  ("tex_star_20.ftex","20 - tex_star_20","tex_star_20"),
+			  ("tex_star_21.ftex","21 - tex_star_21","tex_star_21"),
+			  ("tex_star_22.ftex","22 - tex_star_22","tex_star_22"),
+			  ("tex_star_23.ftex","23 - tex_star_23","tex_star_23"),
+			  ("tex_star_24.ftex","24 - tex_star_24","tex_star_24"),
+			  ("tex_star_25.ftex","25 - tex_star_25","tex_star_25"),
+			  ("tex_star_26.ftex","26 - tex_star_26","tex_star_26"),
+			  ("tex_star_27.ftex","27 - tex_star_27","tex_star_27"),
+			  ("tex_star_28.ftex","28 - tex_star_28","tex_star_28"),
+]
+
+LensFlareTexList=[("tex_ghost_00.ftex","00 - tex_ghost_00","tex_ghost_00.ftex"),
+				("tex_ghost_01.ftex","01 - tex_ghost_01","tex_ghost_01.ftex"),
+				("tex_ghost_02.ftex","02 - tex_ghost_02","tex_ghost_02.ftex"),
+				("tex_ghost_03.ftex","03 - tex_ghost_03","tex_ghost_03.ftex"),
+				("tex_ghost_04.ftex","04 - tex_ghost_04","tex_ghost_04.ftex"),
+				("tex_ghost_05.ftex","05 - tex_ghost_05","tex_ghost_05.ftex"),
+				("tex_ghost_06.ftex","06 - tex_ghost_06","tex_ghost_06.ftex")
+
+]
+
+HaloTexList=[("tex_halo_D00.ftex","D00 - tex_halo_D00","tex_halo_D00.ftex"),
+			("tex_halo_D01.ftex","D01 - tex_halo_D01","tex_halo_D01.ftex"),
+			("tex_halo_D02.ftex","D02 - tex_halo_D02","tex_halo_D02.ftex"),
+			("tex_halo_N00.ftex","N00 - tex_halo_N00","tex_halo_N00.ftex"),
+			("tex_halo_N01.ftex","N01 - tex_halo_N01","tex_halo_N01.ftex"),
+			("tex_halo_N02.ftex","N02 - tex_halo_N02","tex_halo_N02.ftex"),
+			("tex_halo_N03.ftex","N03 - tex_halo_N03","tex_halo_N03.ftex"),
+			("tex_halo_N04.ftex","N04 - tex_halo_N04","tex_halo_N04.ftex"),
+			("tex_halo_N05.ftex","N05 - tex_halo_N05","tex_halo_N05.ftex"),
+			("tex_halo_N06.ftex","N06 - tex_halo_N06","tex_halo_N06.ftex"),
+			("tex_halo_N07.ftex","N07 - tex_halo_N07","tex_halo_N07.ftex"),
+			("tex_halo_N08.ftex","N08 - tex_halo_N08","tex_halo_N08.ftex"),
+			("tex_halo_N09.ftex","N09 - tex_halo_N09","tex_halo_N09.ftex"),
+			("tex_halo_S00.ftex","S00 - tex_halo_S00","tex_halo_S00.ftex"),
+			("tex_halo_S01.ftex","S01 - tex_halo_S01","tex_halo_S01.ftex"),
+			("tex_halo_S02.ftex","S02 - tex_halo_S02","tex_halo_S02.ftex")
+]
+				
 def makedir(DirName, isStadium):
 	listDir=[]
 	splitDir = str(DirName).split('\\')
@@ -280,18 +334,32 @@ def pack_unpack_Fpk(filePath):
 	os.system('"' + GZSPATH + inp_xml + '"')
 	return 1
 
+def hxd(val, count):
+    given_int = val
+    given_len = count
+
+    hex_result = hex(given_int)[2:].upper() # remove '0x' from beginning of str
+    num_hex_chars = len(hex_result)
+    extra_zeros = '0' * (given_len - num_hex_chars) # may not get used..
+
+    return ('0x' + hex_result if num_hex_chars == given_len else
+            '?' * given_len if num_hex_chars > given_len else
+            '0x' + extra_zeros + hex_result if num_hex_chars < given_len else
+            None)
+			
 def texconv(inPath, outPath, arguments, cm):
-	File = open(inPath, 'r', encoding="cp437")
-	File.seek(0x54)
-	TxFormat = File.read(4)
-	File.close()
-	if cm:
-		if TxFormat == "DX10":
-			args = arguments + ' "' + inPath + '"' + ' -o "' + outPath+''
+	if os.path.isfile(inPath):
+		File = open(inPath, 'r', encoding="cp437")
+		File.seek(0x54)
+		TxFormat = File.read(4)
+		File.close()
+		if cm:
+			if TxFormat == "DX10":
+				args = arguments + ' "' + inPath + '"' + ' -o "' + outPath+''
+				os.system('"' + texconvTools + args + '"')
+		else:
+			args = arguments + ' "' + outPath + '" "' + inPath + '"'
 			os.system('"' + texconvTools + args + '"')
-	else:
-		args = arguments + ' "' + outPath + '" "' + inPath + '"'
-		os.system('"' + texconvTools + args + '"')
 	return 1
 
 def convert_ftex(ftexfilepath):
@@ -391,7 +459,13 @@ def Create_Parent_Part(self, context):
 	for ob in bpy.data.objects:
 		if ob.type=="EMPTY":
 			if ob.name in ["L_FRONT","L_RIGHT","L_LEFT","L_BACK"]:
-				ob.parent = bpy.data.objects['LIGHTS']
+				ob.parent = bpy.data.objects['LightBillboard']
+			elif ob.name in ["H_FRONT","H_RIGHT","H_LEFT","H_BACK"]:
+				ob.parent = bpy.data.objects['Halo']
+			elif ob.name in ["F_FRONT","F_RIGHT","F_LEFT","F_BACK"]:
+				ob.parent = bpy.data.objects['LensFlare']
+			elif ob.name in ["LightBillboard", "LensFlare", "Halo"]:
+				ob.parent = bpy.data.objects["LIGHTS"]
 			elif ob.name == "MESH_FLAGAREA":
 				ob.parent = bpy.data.objects["FLAGAREA"]
 			elif ob.name == "MESH_CROWD":
@@ -709,76 +783,7 @@ class FMDL_21_PT_Object_BoundingBox_Panel(bpy.types.Panel):
 	def draw(self, context):
 		self.layout.operator(FMDL_Object_BoundingBox_Create.bl_idname)
 		self.layout.operator(FMDL_Object_BoundingBox_Remove.bl_idname)
-
-def light_fx(outxml):
-	scn = bpy.context.scene
-	hdr_file=open(lightFxPath+"extras21.dll","rb")
-	hdr_file.seek(942,0)
-	dat13=hdr_file.read(236)
-	dat14=hdr_file.read(28)
-	dat15=hdr_file.read(68)
-	hdr_file.flush(),hdr_file.close()
-	
-	cfg = lightFxPath+'xml\\effect_config_%s.xml' %scn.time_mode
-	
-	dat16=open(cfg,'rt').read()
-	LT = scn.l_fx_tex
-	if LT in ['00','01','04']:
-		LR = '30'
-	else:
-		LR = '45'
-	dat16=dat16.replace('%LT',LT)
-	dat16=dat16.replace('%LR',LR)
-	dat16=dat16.replace('stid',scn.STID)
-	light_cfg=open(outxml,'wt')
-	light_cfg.write(dat16)
-	light_cfg.flush(),light_cfg.close()
-	dirname="effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+"_fpk"
-	lamp_list=["L_FRONT","front3","L_LEFT","left3","L_RIGHT","right3","L_BACK","back3"]
-
-	def lamp_side(p_name,l_count):
 		
-		i=lamp_list.index(p_name)
-		if scn.time_mode == 'df':
-			outpath_lightfx = '{0}{1}\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator\\locstar_{3}_df.model'.format(scn.export_path,dirname,scn.STID,lamp_list[i+1])
-		elif scn.time_mode == 'dr':
-			outpath_lightfx = '{0}{1}\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator\\locstar_{3}_dr.model'.format(scn.export_path,dirname,scn.STID,lamp_list[i+1])
-		elif scn.time_mode == 'nf':
-			outpath_lightfx = '{0}{1}\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator\\locstar_{3}_nf_nr.model'.format(scn.export_path,dirname,scn.STID,lamp_list[i+1]) 
-		else:
-			outpath_lightfx = '{0}{1}\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator\\locstar_{3}_nf_nr.model'.format(scn.export_path,dirname,scn.STID,lamp_list[i+1]) 
-			
-		lfx=open(outpath_lightfx,"wb")
-		lfx.write(dat13)
-		lfx.write(pack("4I",(48*l_count+40),l_count,0x72617473,0))
-		return lfx
-
-	for p_lamp in bpy.data.objects['LIGHTS'].children:
-		if len(p_lamp.children) > 0:
-			l_count=len(p_lamp.children)
-			lfx=lamp_side(p_lamp.name,l_count)
-			
-			for lamp in p_lamp.children:
-				l_energy=lamp.l_Energy
-				lfx.write(pack("12f",l_energy,0,0,lamp.location.x,0,1,0,lamp.location.z,0,1,0,(lamp.location.y*-1)))
-			
-			for i in range(l_count):
-				if i == 0:
-					x=4*l_count
-				else:
-					x+=28
-				lfx.write(pack("I",x))
-		
-			for p in range(l_count):
-				lfx.write(dat14)
-			
-			sz1=lfx.tell()
-			lfx.write(dat15)
-			lfx.seek(64,0)
-			lfx.write(pack("I",sz1-24))
-			lfx.close()	
-	return 1
-
 class FMDL_21_PT_UIPanel(bpy.types.Panel):
 	bl_label = "eFootball PES2021 Stadium Exporter"
 	bl_space_type = "PROPERTIES"
@@ -905,7 +910,7 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 				row = box.row()
 				row.label(text="Light FX Exporter", icon="LIGHT_SPOT")
 				row = box.row()
-				if ob.type == 'LIGHT':
+				if "L_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'POINT':
 					if ob.parent:
 						lp=ob.parent.name
 					else:
@@ -913,18 +918,74 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 					row.label(text="Parent: " +lp)
 					row.label(text="Name: " +ob.name)
 					row.label(text="Energy: " +str(round(ob.l_Energy,2))[:4])
-					row = box.row()
-							
+					row = box.row()	
 					row.prop(scn,"l_lit_side",text="")
+					row.operator("lights_side.operator",text="",icon="FILE_REFRESH")
 					row.prop(ob,"l_Energy")
 					row.operator("lightfx.operator",text="Set Light FX",icon="FILE_TICK").opname='set_lfx_side'
 					row = box.row()
-				else:
+				elif "H_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'AREA':
+					if ob.parent:
+						lp=ob.parent.name
+					else:
+						lp="Not Assigned"
+					row.label(text="Parent: " +lp)
+					row.label(text="Name: " +ob.name)
+					row = box.row()
+					row.prop(ob,"HaloTex", text="Texture")
+					row.prop(ob,"rotY", text="Fix-Rot-Y")
+					row = box.row()
+					row.prop(ob,"Pivot")
+					row = box.row()
+					row.prop(scn,"l_lit_side",text="")
+					row.operator("lights_side.operator",text="",icon="FILE_REFRESH")
+					row.operator("lightfx.operator",text="Set Light FX",icon="FILE_TICK").opname='set_lfx_side'
+					row = box.row()
+				elif "F_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'AREA':
+					if ob.parent:
+						lp=ob.parent.name
+					else:
+						lp="Not Assigned"
+					row.label(text="Parent: " +lp)
+					row.label(text="Name: " +ob.name)
+					row = box.row()
+					row.prop(scn,"l_lit_side",text="")
+					row.operator("lights_side.operator",text="",icon="FILE_REFRESH")
+					row.operator("lightfx.operator",text="Set Light FX",icon="FILE_TICK").opname='set_lfx_side'
+					row = box.row()
+				elif ob.type=='MESH' or ob.type=='EMPTY':
 					row.prop(scn,"time_mode",text="Mode")
 					row = box.row()
-					row.prop(scn,"l_fx_tex",text="")			
+					row.prop(scn,"lensflaretex",text="Lens Flare")
+					row = box.row()
+					row.prop(scn,"l_fx_tex",text="")		
 					row.operator("lightfx.operator", text="Export Light FX ", icon="LIGHT_DATA").opname='export_lfx'
 					row = box.row()
+				else:
+					if "H_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type != 'AREA':
+						row = box.row()
+						row.label(text="Light object %s type isn't Area"%ob.name, icon="ERROR")
+						row = box.row()
+					elif "F_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type != 'AREA':
+						row = box.row()
+						row.label(text="Light object %s type isn't Area"%ob.name, icon="ERROR")
+						row = box.row()
+					elif "L_" in ob.name and ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type != 'AREA':
+						row = box.row()
+						row.label(text="Light object %s type isn't Area"%ob.name, icon="ERROR")
+						row = box.row()
+					else:
+						row = box.row()
+						row.label(text="Light object %s name isn't correct"%ob.name, icon="ERROR")
+						row = box.row()
+						row.label(text="Light object name must startswith:", icon="ERROR")
+						row = box.row()
+						row.label(text="(L_) for LightBillboard -> Lights type (Point)", icon="ERROR")
+						row = box.row()
+						row.label(text="(F_) for LensFlare -> Lights type (Area)", icon="ERROR")
+						row = box.row()
+						row.label(text="(H_) for Halo -> Lights type (Area)", icon="ERROR")
+						row = box.row()
 			elif scn.part_info == "TV" and ob is not None:
 				box = layout.box()
 				row = box.row()
@@ -1063,8 +1124,8 @@ class New_STID(bpy.types.Operator):
 		stid=context.scene.STID
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to swap id e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				print("Choose path to swap id e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -1123,6 +1184,51 @@ class TV_Objects(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
+def r_side(context):
+	ob = context.active_object
+	if ob.name.startswith("L_"):
+		if ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'POINT':
+			light_sidelist=[("L_FRONT","FRONT SIDE","FRONT SIDE for LightBillboard"),
+							("L_LEFT","LEFT SIDE","LEFT SIDE for LightBillboard"),
+							("L_RIGHT","RIGHT SIDE","RIGHT SIDE for LightBillboard"),
+							("L_BACK","BACK SIDE","BACK SIDE for LightBillboard")]
+			bpy.types.Scene.l_lit_side = EnumProperty(name="Select Side for Lights",items=light_sidelist)
+	elif ob.name.startswith("H_"):
+		if ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'AREA':
+			light_sidelist=[("H_FRONT","FRONT SIDE","FRONT SIDE for Halo"),
+							("H_LEFT","LEFT SIDE","LEFT SIDE for Halo"),
+							("H_RIGHT","RIGHT SIDE","RIGHT SIDE for Halo"),
+							("H_BACK","BACK SIDE","BACK SIDE for Halo")]
+			bpy.types.Scene.l_lit_side = EnumProperty(name="Select Side for Lights",items=light_sidelist)
+	elif ob.name.startswith("F_"):
+		if ob.type=='LIGHT' and bpy.data.lights[ob.data.name].type == 'AREA':
+			light_sidelist=[("F_FRONT","FRONT SIDE","FRONT SIDE for LensFlare"),
+							("F_LEFT","LEFT SIDE","LEFT SIDE for LensFlare"),
+							("F_RIGHT","RIGHT SIDE","RIGHT SIDE for LensFlare"),
+							("F_BACK","BACK SIDE","BACK SIDE for LensFlare")]
+			bpy.types.Scene.l_lit_side = EnumProperty(name="Select Side for Lights",items=light_sidelist)
+	else:
+		return True
+
+class Refresh_Light_Side(bpy.types.Operator):
+	"""Refresh Lights Side"""
+	bl_idname = "lights_side.operator"
+	bl_label = str()
+
+	@classmethod
+	def poll(cls, context):
+		return (context.mode == "OBJECT")
+	
+	def execute(self, context):
+		side_refresh = r_side(context)
+		if side_refresh:
+			self.report( {"WARNING"}, "Light object name isn't correct!,more info see System Console (^_^)")
+			print("\nLight object name must startswith: \n(L_) for LightBillboard -> object type (Point). \n(H_) for Halo -> object type (Area). \n(F_) for LensFlare -> object type (Area).")
+			return {'CANCELLED'}
+		return {'FINISHED'}
+	pass
+
+
 class Light_FX(bpy.types.Operator):
 	"""Light FX Exporter"""
 	bl_idname = "lightfx.operator"
@@ -1136,16 +1242,31 @@ class Light_FX(bpy.types.Operator):
 	def execute(self, context):
 		stid = context.scene.STID
 		if self.opname == "set_lfx_side":
-			for l_ob in bpy.context.selected_objects:
-				if l_ob.type == 'LIGHT':
-					l_ob.parent = bpy.data.objects[bpy.context.scene.l_lit_side]
+			side_refresh = r_side(context)
+			if side_refresh:
+				self.report( {"WARNING"}, "Light object name isn't correct!,more info see System Console (^_^)")
+				print("\nLight object name must startswith: \n(L_) for LightBillboard -> object type (Point). \n(H_) for Halo -> object type (Area). \n(F_) for LensFlare -> object type (Area).")
+				return {'CANCELLED'}
+			try:
+				for l_ob in bpy.context.selected_objects:
+					if l_ob.type == 'LIGHT':
+						l_ob.parent = bpy.data.objects[bpy.context.scene.l_lit_side]
+			except Exception as exception:
+				self.report({"WARNING"},format(exception))
+				print(format(exception))
+				return {'CANCELLED'}
+
 
 			return {'FINISHED'}
 		if self.opname == "export_lfx":
+			scn = bpy.context.scene
+			sideName,LSide=[],[]
+			
+
 			if len(stid) == 5:
 				if context.scene.export_path == str():
-					self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-					print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+					self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+					print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 					return {'CANCELLED'}
 
 				if not stid in context.scene.export_path:
@@ -1157,23 +1278,131 @@ class Light_FX(bpy.types.Operator):
 					self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 					print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 					return {'CANCELLED'}
-				scn = bpy.context.scene
+
+				l1,l2 = len(bpy.data.objects["L_BACK"].children), len(bpy.data.objects["L_FRONT"].children)
+				l3,l4 = len(bpy.data.objects["L_LEFT"].children), len(bpy.data.objects["L_RIGHT"].children)
+				if l1==0 and l2==0 and l3==0 and l4==0:
+					self.report({"WARNING"}, "Cannot export LightBillboard empty or no object!")
+					print("Cannot export LightBillboard empty or no object!")
+					return {'CANCELLED'}
+
+				f1,f2 = len(bpy.data.objects["F_BACK"].children), len(bpy.data.objects["F_FRONT"].children)
+				f3,f4 = len(bpy.data.objects["F_LEFT"].children), len(bpy.data.objects["F_RIGHT"].children)
+				if f1==0 and f2==0 and f3==0 and f4==0:
+					self.report({"WARNING"}, "Cannot export LensFlare empty or no object!")
+					print("Cannot export LensFlare empty or no object!")
+					return {'CANCELLED'}
+
+				for child in bpy.data.objects["LightBillboard"].children:	
+					if child.type == "EMPTY":
+						for ob in bpy.data.objects[child.name].children:
+							if ob.type == "LIGHT":
+								ol = bpy.data.lights[ob.data.name]
+								if ol.type != "POINT":
+									self.report({"WARNING"}, "Object %s type isn't POINT!"%ob.name)
+									print("Object %s type isn't POINT!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+								if ol.type == "POINT" and not "L_" in ob.name:
+									self.report({"WARNING"}, "Object (%s) name isn't correct!"%ob.name)
+									print("Object (%s) name isn't correct!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+				for child in bpy.data.objects["LensFlare"].children:
+					if child.type == "EMPTY":
+						for ob in bpy.data.objects[child.name].children:
+							if ob.type == "LIGHT":
+								ol = bpy.data.lights[ob.data.name]
+								if ol.type != "AREA":
+									self.report({"WARNING"}, "Object %s type isn't AREA!"%ob.name)
+									print("Object %s type isn't AREA!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+								if ol.type == "AREA" and not "F_" in ob.name:
+									self.report({"WARNING"}, "Object (%s) name isn't correct!"%ob.name)
+									print("Object (%s) name isn't correct!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+				for child in bpy.data.objects["Halo"].children:
+					if child.type == "EMPTY":
+						for ob in bpy.data.objects[child.name].children:
+							if ob.type == "LIGHT":
+								ol = bpy.data.lights[ob.data.name]
+								if ol.type != "AREA":
+									self.report({"WARNING"}, "Object %s type isn't AREA!"%ob.name)
+									print("Object %s type isn't AREA!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+								if ol.type == "AREA" and not "H_" in ob.name:
+									self.report({"WARNING"}, "Object (%s) name isn't correct!"%ob.name)
+									print("Object (%s) name isn't correct!, Checkout object in %s -> %s -> %s"%(ob.name,child.parent.name,ob.parent.name, ob.name))
+									return {'CANCELLED'}
+				
+				makedir("effect\\#Win\\effect_{0}_{1}_fpk\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator".format(scn.STID,scn.time_mode,scn.STID), True)
 				fpkPath="{0}effect\\#Win\\effect_{1}_{2}.fpk".format(scn.export_path, scn.STID,scn.time_mode)
 				xmlPath="{0}effect\\#Win\\effect_{1}_{2}.fpk.xml".format(scn.export_path, scn.STID,scn.time_mode)
 				xmlConfigPath= "{0}effect\\#Win\\effect_{1}_{2}_fpk\\effect_config.xml".format(scn.export_path, scn.STID,scn.time_mode)
-				if os.path.isfile(fpkPath):	
-					print("\nStarting Light FX Export !!\n")
-					pack_unpack_Fpk(fpkPath)
-				else:
-					self.report( {"WARNING"}, "%s file not found!"%fpkPath)
-					print("%s file not found!"%fpkPath)
-					return {'CANCELLED'}
+				
+				p_Ass=[]
+				print("\nStarting Light FX Export !!\n")
 				try:
-					light_fx(xmlConfigPath)
+					hdr_file=open(lightFxPath+"extras21.dll","rb")
+					hdr_file.seek(942,0)
+					dat13=hdr_file.read(236)
+					dat14=hdr_file.read(28)
+					dat15=hdr_file.read(68)
+					hdr_file.flush(),hdr_file.close()
+
+					dirname="effect\\#Win\\effect_"+scn.STID+"_"+scn.time_mode+"_fpk"
+					lamp_list=["L_FRONT","front3","L_LEFT","left3","L_RIGHT","right3","L_BACK","back3"]
+
+					def lamp_side(p_name,l_count):
+						
+						i=lamp_list.index(p_name)
+						outpath_lightfx = '{0}{1}\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator\\locstar_{3}_{4}.model'.format(scn.export_path,dirname,scn.STID,lamp_list[i+1],scn.time_mode)
+							
+						lfx=open(outpath_lightfx,"wb")
+						lfx.write(dat13)
+						lfx.write(pack("4I",(48*l_count+40),l_count,0x72617473,0))
+						return lfx
+					for p_lamp in bpy.data.objects['LightBillboard'].children:
+						sideList=["locstar_back3_%s"%scn.time_mode,
+									"locstar_front3_%s"%scn.time_mode,
+									"locstar_left3_%s"%scn.time_mode,
+									"locstar_right3_%s"%scn.time_mode
+						]
+						
+						if len(p_lamp.children) > 0:
+
+							sideName.append(sideList[L_P_List.index(p_lamp.name)])
+							LSide.append(L_Side[L_P_List.index(p_lamp.name)])
+							assetName="/Assets/pes16/model/bg/{0}/effect/locator/locstar_{1}3_{2}.model".format(scn.STID,L_Side[L_P_List.index(p_lamp.name)],scn.time_mode)
+							p_Ass.append(assetName)
+							l_count=len(p_lamp.children)
+							lfx=lamp_side(p_lamp.name,l_count)
+							
+							for lamp in p_lamp.children:
+								l_energy=lamp.l_Energy
+								lfx.write(pack("12f",l_energy,0,0,lamp.location.x,0,1,0,lamp.location.z,0,1,0,(lamp.location.y*-1)))
+							
+							for i in range(l_count):
+								if i == 0:
+									x=4*l_count
+								else:
+									x+=28
+								lfx.write(pack("I",x))
+						
+							for p in range(l_count):
+								lfx.write(dat14)
+							
+							sz1=lfx.tell()
+							lfx.write(dat15)
+							lfx.seek(64,0)
+							lfx.write(pack("I",sz1-24))
+							lfx.close()	
+					PesFoxXML.lightFxXml(xmlConfigPath,sideName, L_Side)
+					p_Ass.append('effect_config.xml')
+					makeXML(context.scene.export_path+"effect\\#Win\\effect_{0}_{1}.fpk.xml".format(stid,scn.time_mode), p_Ass, "effect_{0}_{1}.fpk".format(stid,scn.time_mode),"Fpk","FpkFile", True)
 					self.report( {"INFO"}, " Light FX Exported has been Successfully... ")
 				except Exception as msg:
 					self.report( {"WARNING"}, format(msg))
-					return {'CANCELLED'}	
+					return {'CANCELLED'}
+					
 				pack_unpack_Fpk(xmlPath)
 				remove_file(xmlPath)
 				remove_dir("{0}effect\\#Win\\effect_{1}_{2}_fpk".format(scn.export_path, scn.STID,scn.time_mode))
@@ -1193,7 +1422,7 @@ class Refresh_OT(bpy.types.Operator):
 	def execute(self, context):
 		scn = context.scene
 		if scn.part_info == "AUDIAREA" or scn.part_info == "FLAGAREA" or scn.part_info == "LIGHTS" or scn.part_info == "TV":
-			parentlist = [(ob.name,ob.name,ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT']]
+			parentlist = [(ob.name,ob.name,ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT','LightBillboard','LensFlare','Halo']]
 			parentlist.sort(reverse=0)
 		else:
 			parentlist = [("MESH_"+ob.name,"MESH_"+ob.name,"MESH_"+ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT', 'MESH_CROWD', 'MESH_FLAGAREA']]
@@ -1456,6 +1685,7 @@ def crowd_exp(outpath, partList, obj_part):
 						v4=mesh.vertices[idx2[x+0][0]].co,idx2[x+0][1],idx2[x+0][2]
 					else:
 						v4=mesh.vertices[idx2[x+1][0]].co,idx2[x+1][1],idx2[x+1][2]
+						
 					if str(obj.name).split("_")[1][:1] in ["f","r"]:
 						vlist.append(v3),vlist.append(v1),vlist.append(v2),vlist.append(v4)
 					else:
@@ -1524,8 +1754,8 @@ class Crowd_OT(bpy.types.Operator):
 					return {'CANCELLED'}
 			if len(stid) == 5:
 				if context.scene.export_path == str():
-					self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-					print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+					self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+					print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 					return {'CANCELLED'}
 
 				if not stid in context.scene.export_path:
@@ -1598,8 +1828,8 @@ class Flags_Area_OT(bpy.types.Operator):
 					return {'CANCELLED'}
 			if len(stid) == 5:
 				if context.scene.export_path == str():
-					self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-					print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+					self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+					print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 					return {'CANCELLED'}
 
 				if not stid in context.scene.export_path:
@@ -1731,8 +1961,8 @@ class Export_OT(bpy.types.Operator):
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+				print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -1756,7 +1986,7 @@ class Export_OT(bpy.types.Operator):
 			en=en.replace("stid",stid)
 			files2.append(en)
 		shearTransformlist,pivotTransformlist,dataList=[],[],[]
-		Stadium_Model,TransformEntityList,Stadium_Kinds=[],[],[]
+		Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir=[],[],[],[]
 		arraySize=0
 		print('\nStarting export object as .FMDL')
 		assetDirname = "/Assets/pes16/model/bg/%s/scenes/" % stid
@@ -1774,42 +2004,13 @@ class Export_OT(bpy.types.Operator):
 								objName = child.name
 								fmdlName = child.name
 								try:
-									addr=str.upper(hex(transformlist[datalist.index(fmdlName)]))
-									if len(addr) == 9:
-										addr=addr.replace("0X","0x0")
-									elif len(addr) == 6:
-										addr=addr.replace("0X","0x0000")
-									else:
-										addr=addr.replace("0X","0x")
-									shearTransformaddr=str.upper(hex(shearTransform[datalist.index(fmdlName)]))
-									if len(shearTransformaddr) == 9:
-										shearTransformaddr=shearTransformaddr.replace("0X","0x0")
-									elif len(shearTransformaddr) == 6:
-										shearTransformaddr=shearTransformaddr.replace("0X","0x0000")
-									elif len(shearTransformaddr) == 3:
-										shearTransformaddr=shearTransformaddr.replace("0X","0x0000000")
-									else:
-										shearTransformaddr=shearTransformaddr.replace("0X","0x")
-									pivotTransformaddr=str.upper(hex(pivotTransform[datalist.index(fmdlName)]))
-									if len(pivotTransformaddr) == 9:
-										pivotTransformaddr=pivotTransformaddr.replace("0X","0x0")
-									elif len(pivotTransformaddr) == 6:
-										pivotTransformaddr=pivotTransformaddr.replace("0X","0x0000")
-									elif len(pivotTransformaddr) == 3:
-										pivotTransformaddr=pivotTransformaddr.replace("0X","0x0000000")
-									else:
-										pivotTransformaddr=pivotTransformaddr.replace("0X","0x")
-									Transformaddr=str.upper(hex(TransformEntity[datalist.index(fmdlName)]))
-									if len(Transformaddr) == 9:
-										Transformaddr=Transformaddr.replace("0X","0x0")
-									elif len(Transformaddr) == 6:
-										Transformaddr=Transformaddr.replace("0X","0x0000")
-									elif len(Transformaddr) == 3:
-										Transformaddr=Transformaddr.replace("0X","0x0000000")
-									else:
-										Transformaddr=Transformaddr.replace("0X","0x")
+									addr=hxd(transformlist[datalist.index(fmdlName)],8)
+									shearTransformaddr=hxd(shearTransform[datalist.index(fmdlName)],8)
+									pivotTransformaddr=hxd(pivotTransform[datalist.index(fmdlName)],8)
+									Transformaddr=hxd(TransformEntity[datalist.index(fmdlName)],8)
 									Stadium_Model.append(StadiumModel[datalist.index(fmdlName)])
 									Stadium_Kinds.append(StadiumKind[datalist.index(fmdlName)])
+									Stadium_Dir.append(StadiumDir[datalist.index(fmdlName)])
 								except Exception as msg:
 									self.report({"WARNING"}, format(msg) + " more info see => System Console (^_^)")
 									print("\n\nInfo: Need to delete "+format(msg))
@@ -1830,7 +2031,7 @@ class Export_OT(bpy.types.Operator):
 		makeXML(exportPath+ "#Win\\"+stid+".fpkd.xml", "/Assets/pes16/model/bg/{0}/{1}_modelset.fox2".format(stid,stid), "%s.fpkd"%stid,"Fpkd","FpkFile", False)
 		fox2XmlPath="{0}#Win\\{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\{3}_modelset.fox2.xml".format(exportPath,stid,stid,stid)
 		try:
-			PesFoxXML.makeXMLForStadium(fox2XmlPath, dataList, arraySize, files, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds)
+			PesFoxXML.makeXMLForStadium(fox2XmlPath, dataList, arraySize, files, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir)
 			compileXML(fox2XmlPath)
 		except Exception as msg:
 			self.report({"INFO"}, format(msg))
@@ -1874,8 +2075,8 @@ class Pitch_Objects(bpy.types.Operator):
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+				print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -1934,7 +2135,7 @@ class Pitch_Objects(bpy.types.Operator):
 
 class ExportStadium_AD(bpy.types.Operator):
 
-	"""Export Adboard of STadium"""
+	"""Export Adboard of Stadium"""
 	bl_idname = "export_ad.operator"
 	bl_label = str()
 
@@ -1954,8 +2155,8 @@ class ExportStadium_AD(bpy.types.Operator):
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export stadium e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+				print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -2037,8 +2238,8 @@ class Export_TV(bpy.types.Operator):
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
+				print("Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -2085,10 +2286,7 @@ class Export_TV(bpy.types.Operator):
 							TvLineSize+=1
 						makedir("tv\\#Win\\tv_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
 						makedir("tv\\#Win\\tv_{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}\\tv".format(stid,stid),True)
-						addr=str.upper(hex(tvdatalist[TvOb.index(fmdlName)]))
-						if len(addr) == 9:
-							addr=addr.replace("0X","0x0")
-						addrs.append(addr)
+						addrs.append(hxd(tvdatalist[TvOb.index(fmdlName)],8))
 						TvName=tvlist[TvOb.index(fmdlName)]	
 						fileName = assetDir + TvName
 						files.append(assetDirname + TvName)
@@ -2136,8 +2334,8 @@ class Convert_OT(bpy.types.Operator):
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
-				self.report({"WARNING"}, "Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
-				print("Choose path to export TV e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
+				self.report({"WARNING"}, "Export path can't be empty!!")
+				print("Export path can't be empty!!")
 				return {'CANCELLED'}
 
 			if not stid in context.scene.export_path:
@@ -2197,10 +2395,7 @@ class Convert_OT(bpy.types.Operator):
 
 										inPath = fileName
 										dirpath = os.path.dirname(filePath)
-										if context.scene.export_path == str():
-											self.report({"WARNING"}, "Export path can't be empty!!")
-											print("Export path can't be empty!!")
-											return {'CANCELLED'}
+
 										filenames, extension = os.path.splitext(fileName)
 										if extension != str():
 											if extension.lower() == '.png':
@@ -2369,7 +2564,7 @@ class Create_Main_Parts(bpy.types.Operator):
 		Create_Parent_Part(self, context)
 
 		if scn.part_info == "AUDIAREA" or scn.part_info == "FLAGAREA" or scn.part_info == "TV":
-			parentlist = [(ob.name,ob.name,ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT']]
+			parentlist = [(ob.name,ob.name,ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT','LightBillboard','LensFlare','Halo']]
 		else:
 			parentlist = [("MESH_"+ob.name,"MESH_"+ob.name,"MESH_"+ob.name) for ob in (bpy.context.scene.objects[context.scene.part_info].children) if ob.type == 'EMPTY' if ob.name in main_list if ob.name not in ['LIGHTS','L_FRONT','L_BACK','L_RIGHT','L_LEFT', 'MESH_CROWD', 'MESH_FLAGAREA']]
 		parentlist.sort(reverse=0)
@@ -2418,7 +2613,7 @@ class FMDL_21_PT_Texture_Panel(bpy.types.Panel, bpy.types.AnyType):
 		row.prop(node, "fmdl_texture_directory", text="Directory")
 
 class FMDL_Scene_Open_Image(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-	"""Open a Image Texture FTEX or DDS"""
+	"""Open a Image Texture DDS / PNG / TGA"""
 	bl_idname = "open.image"
 	bl_label = "Open Image Texture"
 	bl_options = {'REGISTER', 'UNDO'}
@@ -2530,6 +2725,13 @@ def update_shadow_enum(self, context):
 			self.fmdl_shadow_enum_select = 'Unknown'
 		pass
 
+def updList(self, context):
+	if "_N" in self.HaloTex:
+		self.Pivot.y = 0.454784
+	if "_S" in self.HaloTex:
+		self.Pivot.y = 0.9
+	pass
+
 classes = [
 
 	Import_OT,
@@ -2564,6 +2766,7 @@ classes = [
 	Staff_Coach_Pos,
 	New_STID,
 	ExportStadium_AD,
+	Refresh_Light_Side,
 
 	PES_21_PT_CrowdSection,
 	PES_21_OT_assign_crowd_type,
@@ -2631,10 +2834,18 @@ def register():
 	
 	bpy.types.Scene.tvobject = EnumProperty(name="TV",items=[("tv_large_c","tv_large_c","tv_large_c"),
 															("tv_small_c","tv_small_c","tv_small_c")])
-	bpy.types.Scene.l_lit_side = EnumProperty(name="Select Side for Lights",items=light_sidelist,default="L_FRONT")
-	bpy.types.Object.l_Energy = FloatProperty(name="Energy", min=0.25, max=5.0, subtype='FACTOR', default=2.5)
-	bpy.types.Scene.l_fx_tex= EnumProperty(name="Texture Type for Light FX", items=lfx_tex_list, default="tex_star_02.ftex")
+	bpy.types.Scene.l_lit_side = EnumProperty(name="Select Side for Lights",items=light_sidelist)
+	bpy.types.Object.l_Energy = FloatProperty(name="Energy", min=0.25, max=5.0, subtype='FACTOR', default=1.5)
+
+	lfx_tex_list.sort(reverse=1)
+	bpy.types.Scene.l_fx_tex= EnumProperty(name="Texture Type for Light Billboard", items=lfx_tex_list, default="tex_star_02.ftex")
+	bpy.types.Scene.lensflaretex= EnumProperty(name="Texture Type for Lens Flare", items=LensFlareTexList, default="tex_ghost_05.ftex")
 	bpy.types.Scene.time_mode = EnumProperty(name="Select Time/Weather", items=timeMode, default="nf")
+
+	HaloTexList.sort(reverse=1)
+	bpy.types.Object.HaloTex = EnumProperty(name="Texture Type for Halo",items=HaloTexList, update=updList)
+	bpy.types.Object.rotY = BoolProperty(name="fixRotY", default=0)
+	bpy.types.Object.Pivot = FloatVectorProperty(name="Pivot", default=(0.0, 0.0, 0.0), min= 0.0, max= 1.0, subtype = 'XYZ')
 
 def unregister():
 	for pcoll in icons_collections.values():

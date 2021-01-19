@@ -367,8 +367,7 @@ def importFmdl(context, fmdl, filename, importSettings = None):
 			blenderMesh.use_auto_smooth = True
 		
 		if mesh.vertexFields.hasColor:
-			colorLayer = blenderMesh.vertex_colors.new(name='Edit')
-			colorLayer = blenderMesh.vertex_colors.new(name='Anim')
+			colorLayer = blenderMesh.vertex_colors.new()
 			colorLayer.data.foreach_set("color", tuple(itertools.chain.from_iterable([
 				vertex.color[0:4] for vertex in loopVertices
 			])))
