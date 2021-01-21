@@ -8,7 +8,7 @@ from xml.dom.minidom import parse
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"author": "the4chancup - MjTs-140914",
-	"version": (0, 6, 0),
+	"version": (0, 6, 1),
 	"blender": (2, 90, 0),
 	"api": 35853,
 	"location": "Under Scene Tab",
@@ -22,7 +22,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.6.0b"
+myver="v0.6.1b"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -1060,12 +1060,9 @@ class Stadium_Banner(bpy.types.Operator):
 		scn=context.scene
 		stid=scn.STID
 		exportPath=scn.export_path
-		dirPath,fpkfilename,dirRemove,fileRemove,h1,h2=str(),str(),str(),str(),bool(True),bool(True)
-		files2=[]
 		iSize=0
-		dataListKey,hexTfrm,hexKey,kysName=[],[],[],[]
-		assetDir,assetDirname,xmlPath,fpkname,assetDirFpkd,foxxmlName,mdltype=str(),str(),str(),str(),str(),str(),str()
-		xmldPath,fox2asset,fpkdname,dirdRemove,filedRemove=str(),str(),str(),str(),str()
+		dataListKey,hexTfrm,hexKey,kysName,files2=[],[],[],[],[]
+		dirPath=str()
 		if len(stid) == 5:
 			if context.scene.export_path == str():
 				self.report({"WARNING"}, "Choose path to import/export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
@@ -1104,7 +1101,6 @@ class Stadium_Banner(bpy.types.Operator):
 					ftexPath = "%ssourceimages\\tga\\#windx11\\%s" % (exportPath,texname)
 					dirPath = "%ssourceimages\\tga\\#windx11\\" % exportPath
 					ddsPath = ftexPath[:-4]+"dds"
-					print("")
 					if os.path.isfile(ftexPath):
 						try:
 							Ftex.ftexToDds(ftexPath , ddsPath)
@@ -1202,8 +1198,8 @@ class Stadium_Banner(bpy.types.Operator):
 							for ob2 in bpy.data.objects[ob.name].children[:1]:
 								if ob2 is not None:
 									print('\n********************************')
-									makedir(assetDir,True)
-									makedir(assetDirFpkd,True)
+									makedir("cheer\\#Win\\cheer_%s_h_a1_fpk\\Assets\\pes16\\model\\bg\\%s\\scenes"%(stid,stid),True)
+									makedir("cheer\\#Win\\cheer_%s_h_a1_fpkd\\Assets\\pes16\\model\\bg\\%s\\cheer"%(stid,stid),True)
 									
 									objName = child.name
 									fmdlName = child.name
@@ -1269,8 +1265,8 @@ class Stadium_Banner(bpy.types.Operator):
 							for ob2 in bpy.data.objects[ob.name].children[:1]:
 								if ob2 is not None:
 									print('\n********************************')
-									makedir(assetDir,True)
-									makedir(assetDirFpkd,True)
+									makedir("cheer\\#Win\\cheer_%s_h_a1_fpk\\Assets\\pes16\\model\\bg\\%s\\scenes"%(stid,stid),True)
+									makedir("cheer\\#Win\\cheer_%s_h_a1_fpkd\\Assets\\pes16\\model\\bg\\%s\\cheer"%(stid,stid),True)
 									
 									objName = child.name
 									fmdlName = child.name
