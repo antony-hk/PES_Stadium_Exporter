@@ -11,9 +11,9 @@ This tool is *heavily* based on the
 
 To install, simply download the Zip file from the latest release.
 
-* Blender 2.80+ Go to Edit>Prefences>Add-ons>Install.
+* Blender 2.90+ Go to Edit>Prefences>Add-ons>Install.
 > * After installing done, you need disable Relative Paths.
-> * Blender 2.80+ Go to Edit>Prefences>Save & Load unchecklist Relative Paths.
+> * Blender 2.90+ Go to Edit>Prefences>Save & Load unchecklist Relative Paths.
 
 
 
