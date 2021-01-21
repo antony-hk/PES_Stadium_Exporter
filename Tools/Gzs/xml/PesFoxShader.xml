@@ -283,4 +283,19 @@ These are some of the original shaders from KONAMI: https://pastebin.com/raw/Cpz
 		<Parameter vector="UShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
 		<Parameter vector="VShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
     </FoxShader>
+	<FoxShader shader="fox3ddf_blin_layer_mul" technique="fox3DDF_Blin_LayerMul">
+		<Parameter textures="Base_Tex_SRGB"/>
+		<Parameter textures="NormalMap_Tex_NRM"/>
+		<Parameter textures="SpecularMap_Tex_LIN"/>
+		<Parameter textures="Layer_Tex_SRGB"/>
+		<Parameter textures="LayerMask_Tex_LIN"/>
+		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_1" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_2" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="MatParamIndex_3" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="URepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VRepeat_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="UShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+		<Parameter vector="VShift_UV" xValue="0" yValue="0" zValue="0" wValue="0"/>
+    </FoxShader>
 </FoxShader>

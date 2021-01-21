@@ -32,6 +32,7 @@ class ImportSettings:
 		self.armatureName = str()
 		self.meshIdName = str()
 		self.fixMeshsmooth = True
+		self.texture_path = str()
 
 class ExportSettings:
 	def __init__(self):
@@ -214,7 +215,7 @@ def importFmdl(context, fmdl, filename, importSettings = None):
 				uvMapNormals = UV_MAP_COLOR
 			
 			for (role, texture) in materialInstance.textures:
-				PesNodes.addTexture(context, blenderMaterial, role, texture, textureIDs, uvMapColor, uvMapNormals, textureSearchPath, loadTextures)
+				PesNodes.addTexture(context, blenderMaterial, role, texture, textureIDs, uvMapColor, uvMapNormals, textureSearchPath, loadTextures, importSettings.texture_path)
 		
 		return materialIDs
 	

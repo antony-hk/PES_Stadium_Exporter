@@ -309,3 +309,29 @@ def lightFxXml(filename,sideName,L_Side):
 		file.write('\n</effect>')
 		file.flush(),file.close()
 	return 1
+
+def cheerXML(filename,iSize,dataListKey,hexKey,mdltype,hexTfrm):
+	idx1,idx2=0,0
+	with open(filename, "w", encoding="utf-8") as file:
+		classcheer=open(PES_Stadium_Exporter.xml_dir+'cheer\\class.xml','rt').read()
+		file.write(classcheer)
+		file.write('\n\t\t\t\t<property name="dataList" type="EntityPtr" container="StringMap" arraySize="%i">'%iSize)
+		for kys in dataListKey:
+			file.write('\n\t\t\t\t\t<value key="%s">%s</value>'%(kys,hexKey[idx1]))
+			idx1+=1
+		file.write('\n\t\t\t\t</property>')
+		for ls in lsRow:
+			file.write(ls)
+		for kys in dataListKey:
+			cheermdl=open(PES_Stadium_Exporter.xml_dir+'cheer\\cheerMdl.xml','rt').read()
+			cheermdl=cheermdl.replace("addrs",hexKey[idx2])
+			cheermdl=cheermdl.replace("mdldir",kys)
+			cheermdl=cheermdl.replace("cheer_dirs",kys)
+			cheermdl=cheermdl.replace("cheertype",mdltype)
+			cheermdl=cheermdl.replace("hexTfrm",hexTfrm[idx2])
+			file.write(cheermdl)
+			idx2+=1
+		for fr in foxroot:
+			file.write(fr)
+		file.flush(),file.close()
+	return 1

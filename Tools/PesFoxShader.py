@@ -33,7 +33,7 @@ ShadowEnum = [('Unknown', 'Unknown', 'Unknown'),
 ]
 
 def setShader(self, context):
-	get_texture_directory = str()
+	texture_directory = str()
 	domData = parse(PES_Stadium_Exporter.xml_dir+"PesFoxShader.xml")
 	material = context.material
 	parameter = material.fmdl_material_parameters.clear()
@@ -69,7 +69,10 @@ def setShader(self, context):
 	blenderMaterial.node_tree.links.new(NRM_Converter.outputs['Normal'], principled.inputs['Normal'])
 
 	try:
-		get_texture_directory = "/Assets/pes16/model/bg/%s/sourceimages/tga/" % context.scene.STID
+		if context.scene.part_info == "AD":
+			texture_directory = "/Assets/pes16/model/bg/common/ad/sourceimages/tga/"
+		else:
+			texture_directory = "/Assets/pes16/model/bg/%s/sourceimages/tga/" % context.scene.STID
 		ob = bpy.context.active_object
 		for slot in bpy.data.objects[ob.name].material_slots:
 			materials_name = slot.name
@@ -89,7 +92,7 @@ def setShader(self, context):
 							rdmy = random.randint(-400, 300)
 							blenderTexture = blenderMaterial.node_tree.nodes.new("ShaderNodeTexImage")
 							blenderMaterial.node_tree.nodes['Image Texture'].fmdl_texture_role = textures
-							blenderMaterial.node_tree.nodes['Image Texture'].fmdl_texture_directory = get_texture_directory
+							blenderMaterial.node_tree.nodes['Image Texture'].fmdl_texture_directory = texture_directory
 
 							if technique == 'pes3DFW_EyeOcclusion':
 								blenderMaterial.node_tree.nodes['Image Texture'].fmdl_texture_filename  = 'eye_occlusion_alp.dds'

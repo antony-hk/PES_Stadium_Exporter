@@ -66,12 +66,12 @@ def createNodes(blenderMaterial):
 		new_group_node.node_tree = bpy.data.node_groups['NRM Converter']
 		blenderMaterial.node_tree.nodes['Group'].name = 'NRM Converter'
 
-def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMapColor, uvMapNormals, textureSearchPath, loadTextures):
+def addTexture(context, blenderMaterial, textureRole, texture, textureIDs, uvMapColor, uvMapNormals, textureSearchPath, loadTextures, texture_path):
 
 	blenderMaterial.use_nodes = True
 	identifier = (textureRole, texture)
 	texture_name = texture.filename[:-3]+"dds"
-	texture_path = context.scene.texture_path + texture_name
+	texture_path = texture_path + texture_name
 	textureName=textureRole
 	textureLabel=texture.filename
 	if identifier in textureIDs:
