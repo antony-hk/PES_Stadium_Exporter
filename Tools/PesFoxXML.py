@@ -4,29 +4,29 @@ mydate = datetime.datetime.now()
 
 #Create and generate XML contents by object stadium
 cl=['\n\t<classes>'
-    '\n\t\t<class name="Entity" super="" version="2" />'
-    '\n\t\t<class name="Data" super="Entity" version="2" />'
-    '\n\t\t<class name="DataSet" super="" version="0" />'
-    '\n\t\t<class name="StadiumModel" super="" version="3" />'
+	'\n\t\t<class name="Entity" super="" version="2" />'
+	'\n\t\t<class name="Data" super="Entity" version="2" />'
+	'\n\t\t<class name="DataSet" super="" version="0" />'
+	'\n\t\t<class name="StadiumModel" super="" version="3" />'
 	'\n\t\t<class name="EnlightenProbeSet" super="" version="0" />'
-    '\n\t\t<class name="EnlightenSystemContainer" super="" version="0" />'
-    '\n\t\t<class name="TransformEntity" super="" version="0" />'
-    '\n\t\t<class name="ShearTransformEntity" super="" version="0" />'
-    '\n\t\t<class name="PivotTransformEntity" super="" version="0" />'
+	'\n\t\t<class name="EnlightenSystemContainer" super="" version="0" />'
+	'\n\t\t<class name="TransformEntity" super="" version="0" />'
+	'\n\t\t<class name="ShearTransformEntity" super="" version="0" />'
+	'\n\t\t<class name="PivotTransformEntity" super="" version="0" />'
   	'\n\t</classes>'
 	'\n\t<entities>'
-    '\n\t\t<entity class="DataSet" classVersion="0" addr="0x03172C40" unknown1="296" unknown2="0">'
-    '\n\t\t\t<staticProperties>'
-    '\n\t\t\t\t<property name="name" type="String" container="StaticArray" arraySize="1">'
-    '\n\t\t\t\t\t<value hash="0xB8A0BF169F98" />'
-    '\n\t\t\t\t</property>'
-    '\n\t\t\t\t<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">'
-    '\n\t\t\t\t\t<value>0x00000000</value>'
-    '\n\t\t\t\t</property>'
+	'\n\t\t<entity class="DataSet" classVersion="0" addr="0x03172C40" unknown1="296" unknown2="0">'
+	'\n\t\t\t<staticProperties>'
+	'\n\t\t\t\t<property name="name" type="String" container="StaticArray" arraySize="1">'
+	'\n\t\t\t\t\t<value hash="0xB8A0BF169F98" />'
+	'\n\t\t\t\t</property>'
+	'\n\t\t\t\t<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">'
+	'\n\t\t\t\t\t<value>0x00000000</value>'
+	'\n\t\t\t\t</property>'
   ]
 lsRow=['\n\t\t\t</staticProperties>'
-      	'\n\t\t\t<dynamicProperties />'
-    	'\n\t\t</entity>'
+	  	'\n\t\t\t<dynamicProperties />'
+		'\n\t\t</entity>'
 ]
 
 foxroot=["\n\t</entities>"
@@ -82,21 +82,21 @@ def makeXMLForStadium(filename,dataList, arraySize, assetpath, shearTransformlis
 cltv=[ 
 	'\n\t<classes>'
 	'\n\t\t<class name="Entity" super="" version="2" />'
-    '\n\t\t<class name="Data" super="Entity" version="2" />'
-    '\n\t\t<class name="DataSet" super="" version="0" />'
-    '\n\t\t<class name="StadiumModel" super="" version="2" />'
-    '\n\t\t<class name="TransformEntity" super="" version="0" />'
-    '\n\t\t<class name="StadiumTexture" super="" version="1" />'
+	'\n\t\t<class name="Data" super="Entity" version="2" />'
+	'\n\t\t<class name="DataSet" super="" version="0" />'
+	'\n\t\t<class name="StadiumModel" super="" version="2" />'
+	'\n\t\t<class name="TransformEntity" super="" version="0" />'
+	'\n\t\t<class name="StadiumTexture" super="" version="1" />'
 	'\n\t</classes>'
 	'\n\t<entities>'
-    '\n\t\t<entity class="DataSet" classVersion="0" addr="0x02D72D90" unknown1="296" unknown2="0">'
-    '\n\t\t\t<staticProperties>'
-    '\n\t\t\t\t<property name="name" type="String" container="StaticArray" arraySize="1">'
-    '\n\t\t\t\t\t<value hash="0xB8A0BF169F98" />'
-    '\n\t\t\t\t</property>'
-    '\n\t\t\t\t<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">'
-    '\n\t\t\t\t\t<value>0x00000000</value>'
-    '\n\t\t\t\t</property>'
+	'\n\t\t<entity class="DataSet" classVersion="0" addr="0x02D72D90" unknown1="296" unknown2="0">'
+	'\n\t\t\t<staticProperties>'
+	'\n\t\t\t\t<property name="name" type="String" container="StaticArray" arraySize="1">'
+	'\n\t\t\t\t\t<value hash="0xB8A0BF169F98" />'
+	'\n\t\t\t\t</property>'
+	'\n\t\t\t\t<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">'
+	'\n\t\t\t\t\t<value>0x00000000</value>'
+	'\n\t\t\t\t</property>'
 ]
 
 tvBox=[ 
@@ -208,8 +208,8 @@ def makeXMLForTv(filename,TvMdl,arraySize,addrs,assetpath,TvBoxSize,TvLineSize):
 
 	#Create and generate effect XML contents by object light
 Vignetting=['\n\t<setting type="Vignetting" index="0">'
-    		'\n\t\t<param id="texturePath" type="path" value="/Assets/pes16/model/bg/common/effect/texture/filter/filter.ftex" />'
-    		'\n\t\t<param id="alpha" type="uint" value="0x80" />'
+			'\n\t\t<param id="texturePath" type="path" value="/Assets/pes16/model/bg/common/effect/texture/filter/filter.ftex" />'
+			'\n\t\t<param id="alpha" type="uint" value="0x80" />'
   			'\n\t</setting>'
 ]
 def lightFxXml(filename,sideName,L_Side):
@@ -331,6 +331,176 @@ def cheerXML(filename,iSize,dataListKey,hexKey,mdltype,hexTfrm):
 			cheermdl=cheermdl.replace("hexTfrm",hexTfrm[idx2])
 			file.write(cheermdl)
 			idx2+=1
+		for fr in foxroot:
+			file.write(fr)
+		file.flush(),file.close()
+	return 1
+
+def scrMakeXml(filename,isize,lstTotal,lstTotal2,lstTotal3):
+	stid=bpy.context.scene.STID
+	isize+=2
+	lstObject,lstObject2,lstObject3=[],[],[]
+	idx,idx2=0,0
+	with open(filename, "w", encoding="utf-8") as file:
+		scrclass=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\class.xml','rt').read()
+		file.write(scrclass)
+		file.write('\n\t\t\t\t<property name="dataList" type="EntityPtr" container="StringMap" arraySize="%i">'%isize)
+		for ob in bpy.data.objects["SCARECROW"].children:
+			if ob.type == 'EMPTY' and ob is not None:
+				file.write('\n\t\t\t\t\t<value key="%s">%s</value>'%(ob.scrName,ob.scrEntityPtr))
+		for ob in bpy.data.objects["SCARECROW"].children:
+			if ob.type == 'EMPTY' and ob is not None:
+				if ob.scrLimitedRotatable:
+					if not ob.ObjectLinksName in lstObject:
+						lstObject.append(ob.ObjectLinksName)
+						file.write('\n\t\t\t\t\t<value key="%s">%s</value>'%(ob.ObjectLinksName,ob.EntityObjectLinks))
+		file.write('\n\t\t\t\t\t<value key="TexAlias_bsm00__StillCam_Bib">0x00020B00</value>')
+		file.write('\n\t\t\t\t\t<value key="TexAlias_bsm03__TVCam_Bib">0x00020C00</value>')
+		file.write('\n\t\t\t\t</property>')
+		for ls in lsRow:
+			file.write(ls)
+		for ob in bpy.data.objects["SCARECROW"].children:
+			if ob.type == 'EMPTY' and ob is not None:
+				lx,ly,lz=ob.location.x,ob.location.y*-1,ob.location.z
+				rw,rx,ry,rz=ob.rotation_quaternion.w,ob.rotation_quaternion.x,ob.rotation_quaternion.y*-1,ob.rotation_quaternion.z
+				stModel=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\StadiumModel.xml','rt').read()
+				if "_sc20" in ob.name:
+					assets="/Assets/pes16/model/bg/%s/scarecrow/%s.fmdl"%(stid,ob.name)
+				else:
+					fmdlname = ob.name
+					if "." in ob.name:
+						fmdlname = str(ob.name).split(".")[0]
+					assets="/Assets/pes16/model/bg/common/static_obj/%s.fmdl"%fmdlname
+
+				stModel=stModel.replace("%name", ob.scrName)
+				stModel=stModel.replace("%assetPath", assets)
+				stModel=stModel.replace("%addr", ob.scrEntityPtr)
+				stModel=stModel.replace("%transform", ob.scrTransformEntity)
+				stModel=stModel.replace("%direction", str(ob.scrDirection))
+				stModel=stModel.replace("%kind", str(ob.scrKind))
+				stModel=stModel.replace("%demoGroup", str(ob.scrDemoGroup))
+
+				ob.rotation_mode = "QUATERNION"
+				stModel=stModel.replace("%qx", "%f"%rx)
+				stModel=stModel.replace("%qy", "%f"%rz)
+				stModel=stModel.replace("%qz", "%f"%ry)
+				stModel=stModel.replace("%qw", "%f"%rw)
+
+
+				stModel=stModel.replace("%tx", "%f"%lx)
+				stModel=stModel.replace("%ty", "%f"%lz)
+				stModel=stModel.replace("%tz", "%f"%ly)
+				file.write(stModel)
+
+
+		StadiumTexAlias=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\StadiumTexAlias.xml','rt').read()
+		file.write(StadiumTexAlias)
+		tr=0
+
+		for ob in bpy.data.objects["SCARECROW"].children:
+			if ob.type == 'EMPTY' and ob is not None:
+				if ob.scrLimitedRotatable:
+					if not ob.ObjectLinksName in lstObject2:
+						lstObject2.append(ob.ObjectLinksName)
+						ObjectLinks=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\LimitedRotatableObjectLinks.xml','rt').read()
+						ObjectLinks=ObjectLinks.replace("%addr",ob.EntityObjectLinks)
+						ObjectLinks=ObjectLinks.replace("%name",ob.ObjectLinksName)
+						file.write(ObjectLinks)
+						tr=1
+					else:
+						tr=0
+					if ob.ObjectLinksName in lstObject2:
+						idx = lstTotal.count(ob.ObjectLinksName)
+					if tr==1:
+						file.write('\n\t\t\t\t<property name="links" type="EntityLink" container="StringMap" arraySize="%i">'%idx)
+					for ls in lstTotal2[:idx]:
+						if tr==1:
+							file.write('\n\t\t\t\t\t<value key="%s" packagePathHash="%s" archivePath="/Assets/pes16/model/bg/%s/scarecrow/%s_pes2020_00.fox2" nameInArchive="%s">%s</value>'
+							%(lstTotal2[idx2],ob.packagePathHash,stid,stid,lstTotal2[idx2],lstTotal3[idx2]))	
+							idx2+=1
+					if not ob.ObjectLinksName in lstObject3:
+						lstObject3.append(ob.ObjectLinksName)
+						ObjectLinks2=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\LimitedRotatableObjectLinks2.xml','rt').read()
+						ObjectLinks2=ObjectLinks2.replace("%maxRotDegreeLeft","%i"%ob.maxRotDegreeLeft)
+						ObjectLinks2=ObjectLinks2.replace("%maxRotDegreeRight","%i"%ob.maxRotDegreeRight)
+						ObjectLinks2=ObjectLinks2.replace("%maxRotSpeedLeft","%i"%ob.maxRotSpeedLeft)
+						ObjectLinks2=ObjectLinks2.replace("%maxRotSpeedRight","%i"%ob.maxRotSpeedRight)
+						file.write(ObjectLinks2)
+		for fr in foxroot:
+			file.write(fr)
+		file.flush(),file.close()
+	return 1
+
+foxClass='''<?xml version="1.0" encoding="utf-8"?>
+<fox formatVersion="2" fileVersion="0" originalVersion="Thu Jan 28 19:13:40 UTC+07:00 2021">
+  <classes>
+	<class name="Entity" super="" version="2" />
+	<class name="Data" super="Entity" version="2" />
+	<class name="DataSet" super="" version="0" />
+	<class name="StadiumAnime" super="" version="3" />
+	<class name="StadiumModel" super="" version="3" />
+	<class name="TransformEntity" super="" version="0" />
+  </classes>
+  <entities>
+	<entity class="DataSet" classVersion="0" addr="0xB39B6B50" unknown1="296" unknown2="0">
+	  <staticProperties>
+		<property name="name" type="String" container="StaticArray" arraySize="1">
+		  <value hash="0xB8A0BF169F98" />
+		</property>
+		<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">
+		  <value>0x00000000</value>
+		</property>'''
+entityClose='''
+			</property>
+		</staticProperties>
+		<dynamicProperties />
+	</entity>'''
+
+def Staff_Walk_xml(filename,iarraySize):
+	iarraySize2=iarraySize
+	iarraySize+=1
+	with open(filename, "w", encoding="utf-8") as file:
+		file.write(foxClass)
+		file.write('\n\t\t<property name="dataList" type="EntityPtr" container="StringMap" arraySize="%i">'%iarraySize)
+		file.write('\n\t\t\t<value key="ani_walk">0xB39B6C90</value>')
+		for ob in bpy.data.objects['Staff Walk'].children:
+			if ob.type == "EMPTY":
+				file.write('\n\t\t\t<value key="%s">%s</value>'%(ob.scrName,ob.scrEntityPtr))
+		file.write(entityClose)
+		StadiumAnime=open(PES_Stadium_Exporter.xml_dir+'staff\\StadiumAnime.xml','rt').read()
+		file.write(StadiumAnime)
+		file.write('\n\t\t\t<property name="models" type="EntityPtr" container="DynamicArray" arraySize="%i">'%iarraySize2)
+		for ob in bpy.data.objects['Staff Walk'].children:
+			if ob.type == "EMPTY":
+				file.write('\n\t\t\t\t<value>%s</value>'%ob.scrEntityPtr)
+		file.write(entityClose)
+		for ob in bpy.data.objects['Staff Walk'].children:
+			if ob.type == "EMPTY":
+				lx,ly,lz=ob.location.x,ob.location.y*-1,ob.location.z
+				rw,rx,ry,rz=ob.rotation_quaternion.w,ob.rotation_quaternion.x,ob.rotation_quaternion.y*-1,ob.rotation_quaternion.z
+				obname = ob.name
+				if '.' in obname:
+					obname=str(obname).split('.')[0]
+				walkModel=open(PES_Stadium_Exporter.xml_dir+'staff\\walkModel.xml','rt').read()
+				walkModel=walkModel.replace('%obj','%s'%obname)
+				walkModel=walkModel.replace('%name','%s'%ob.scrName)
+				walkModel=walkModel.replace('%addr','%s'%ob.scrEntityPtr)
+				walkModel=walkModel.replace('%transform','%s'%ob.scrTransformEntity)
+				walkModel=walkModel.replace("%direction", str(ob.scrDirection))
+				walkModel=walkModel.replace("%kind", str(ob.scrKind))
+				walkModel=walkModel.replace("%demoGroup", str(ob.scrDemoGroup))
+
+				ob.rotation_mode = "QUATERNION"
+				walkModel=walkModel.replace("%qx", "%f"%rx)
+				walkModel=walkModel.replace("%qy", "%f"%rz)
+				walkModel=walkModel.replace("%qz", "%f"%ry)
+				walkModel=walkModel.replace("%qw", "%f"%rw)
+
+
+				walkModel=walkModel.replace("%tx", "%f"%lx)
+				walkModel=walkModel.replace("%ty", "%f"%lz)
+				walkModel=walkModel.replace("%tz", "%f"%ly)
+				file.write(walkModel)
 		for fr in foxroot:
 			file.write(fr)
 		file.flush(),file.close()

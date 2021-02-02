@@ -20,6 +20,21 @@ AlphaEnum = [('Unknown', 'Unknown', 'Unknown'),
 			('192', 'Unknown OMBS', 'Unknown OMBS'),
 			('32', 'No backface culling', 'No backface culling')
 ]
+Alpha_EnumDict ={0: 'No Alpha - (One Side)',
+				16: 'Glass',
+				17: 'Glass2',
+				48: 'Glass3',
+				49: 'Glass4',
+				80: 'Decal',
+				81: 'Decal2',
+				112: 'Eyelash',
+				113: 'Eyelash2',
+				128: 'Parasite - Alpha (Two Side)',
+				140: 'Alpha2',
+				160: 'Alpha - Alpha (One Side)',
+				192: 'Unknown OMBS',
+				32: 'No backface culling - No Alpha (Two Side)'
+}
 ShadowEnum = [('Unknown', 'Unknown', 'Unknown'),
 			('0', 'Shadow', 'Shadow'),
 			('1', 'No Shadow', 'No Shadow'),
@@ -31,6 +46,17 @@ ShadowEnum = [('Unknown', 'Unknown', 'Unknown'),
 			('64', 'Shadow2', 'Shadow2'),
 			('65', 'No Shadow2', 'No Shadow2')
 ]
+
+ShadowEnumDict={0:'Shadow',
+				1: 'No Shadow',
+				2: 'Invisible Mesh Visible Shadow',
+				4: 'Tinted Glass',
+				5: 'Glass',
+				36: 'Light OMBS',
+				38: 'Glass OMBS',
+				64: 'Shadow2',
+				65: 'No Shadow2'
+}
 
 def setShader(self, context):
 	texture_directory = str()

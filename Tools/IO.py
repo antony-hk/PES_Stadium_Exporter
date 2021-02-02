@@ -33,6 +33,7 @@ class ImportSettings:
 		self.meshIdName = str()
 		self.fixMeshsmooth = True
 		self.texture_path = str()
+		self.parents = str()
 
 class ExportSettings:
 	def __init__(self):
@@ -197,6 +198,7 @@ def importFmdl(context, fmdl, filename, importSettings = None):
 		textureIDs = {}
 		
 		for materialInstance in fmdl.materialInstances:
+
 			blenderMaterial = bpy.data.materials.new(materialInstance.name)
 			materialIDs[materialInstance] = blenderMaterial.name
 			
@@ -466,9 +468,7 @@ def importFmdl(context, fmdl, filename, importSettings = None):
 		for child in meshGroup.children:
 			childID = addMeshGroup(context, child, meshObjectIDs, importBoundingBoxMode)
 			bpy.data.objects[childID].parent = bpy.data.objects[meshGroupID]
-			parents=meshGroupID.split("_")
-			if parents[0] in PES_Stadium_Exporter.datalist:
-				bpy.data.objects[meshGroupID].parent = bpy.data.objects["MAIN"]
+			bpy.data.objects[meshGroupID].parent = bpy.data.objects[importSettings.parents]
 		return meshGroupID
 	
 	def importMeshTree(context, fmdl, meshObjectIDs, armatureObjectID, filename, importBoundingBoxMode):

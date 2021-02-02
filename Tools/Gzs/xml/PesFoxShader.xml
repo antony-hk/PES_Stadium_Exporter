@@ -83,6 +83,13 @@ These are some of the original shaders from KONAMI: https://pastebin.com/raw/Cpz
 		<Parameter textures="MetalnessMap_Tex_LIN"/>
 		<Parameter vector="MatParamIndex_0" xValue="18" yValue="0" zValue="0" wValue="0"/>
     </FoxShader>
+	<FoxShader shader="fox3ddf_ggx" technique="fox3DDF_GGX_LNM">
+		<Parameter textures="Base_Tex_SRGB"/>
+		<Parameter textures="NormalMap_Tex_NRM"/>
+		<Parameter textures="SpecularMap_Tex_LIN"/>
+		<Parameter textures="MetalnessMap_Tex_LIN"/>
+		<Parameter vector="MatParamIndex_0" xValue="0" yValue="0" zValue="0" wValue="0"/>
+    </FoxShader>
 	<FoxShader shader="fox3ddf_blin_decal" technique="fox3DDC_Blin">
 		<Parameter textures="Base_Tex_SRGB"/>
 		<Parameter textures="NormalMap_Tex_NRM"/>
