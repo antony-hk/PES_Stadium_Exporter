@@ -28,6 +28,7 @@ Thanks to the following people who have contributed to this project:
 * [Atvaark](https://github.com/Atvaark)
 * [Suat Cadgas/sxsxsx](https://evo-web.co.uk/members/sxsxsx.76315/)
 * [themex](https://evo-web.co.uk/members/themex.302390/)
+* [zlac](https://evo-web.co.uk/members/zlac.136687/)
 
 #### Credits:
 
@@ -41,6 +42,7 @@ Thanks to the following people who have contributed to this project:
 > * [Atvaark](https://github.com/Atvaark)
 > * [Suat Cadgas/sxsxsx](https://evo-web.co.uk/members/sxsxsx.76315/)
 > * [themex](https://evo-web.co.uk/members/themex.302390/)
+> * [zlac](https://evo-web.co.uk/members/zlac.136687/)
 
 
 ## License
