@@ -89,8 +89,6 @@ def Staff_Config(self,context,fox2xml, cldname):
 		fmdl_name = os.path.splitext(fmdl_name)
 		fmdl_name = str(fmdl_name[0]).split('/')[-1]
 		objlist.append(fmdl_name)
-		print(fmdl_name)
-
 
 	# Applied value to each object in xml and duplicate object length in xml
 	for ob in bpy.data.objects[cldname].children:

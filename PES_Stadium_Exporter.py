@@ -35,7 +35,7 @@
 # '''
 
 
-import bpy, os, bpy.utils.previews, bpy_extras, shutil, bmesh, re, math, struct
+import bpy, os, bpy.utils.previews, bpy_extras, shutil, bmesh, re, math
 from struct import pack,unpack
 from bpy.props import (EnumProperty, CollectionProperty, IntProperty, StringProperty, BoolProperty, FloatProperty, FloatVectorProperty)
 from Tools import FmdlFile, Ftex, IO, PesFoxShader, PesFoxXML, PesEnlighten, PesScarecrow, PesStaff
@@ -259,49 +259,54 @@ cheerhexKey=[0x00000200,0x00000400,0x00000600,0x00000800
 cheerhextfrm=[0x00000300,0x00000500,0x00000700,0x00000900
 ]
 
-crowd_type = {'UltraHome':0.9999,
-			  'HardcoreHome':0.8999,
-			  'HeavyHome':0.7999,
-			  'PopHome':0.6999,
-			  'FolkHome':0.5999,
-			  'JumpHome':5.0,
-			  'Neutral':0.5,
-			  'JumpAway':4.0,
-			  'FolkAway':0.4999,
-			  'PopAway':0.3999,
-			  'HeavyAway':0.2999,
-			  'HardcoreAway':0.1999,
-			  'UltraAway':0.0999
+crowd_type = {'C1-UltraHome':0.9999, 'C2-UltraHome':2.9999,
+			  'C1-HardcoreHome':0.8999, 'C2-HardcoreHome':2.8999,
+			  'C1-HeavyHome':0.8599, 'C2-HeavyHome':2.8599,
+			  'C1-PopHome':0.7999, 'C2-PopHome':2.7999,
+			  'C1-FolkHome':0.6999, 'C2-FolkHome':2.6999,
+			  'C1-Neutral':0.5, 'C2-Neutral':2.5,
+			  'C1-FolkAway':0.4999, 'C2-FolkAway':2.4999,
+			  'C1-PopAway':0.3999,'C2-PopAway':2.3999,
+			  'C1-HeavyAway':0.2999, 'C2-HeavyAway':2.2999,
+			  'C1-HardcoreAway':0.1999, 'C2-HardcoreAway':2.1999,
+			  'C1-UltraAway':0.0999, 'C2-UltraAway':2.0999
 }
 
-crowd_typedict = {0.9:'UltraHome',
-			  0.8:'HardcoreHome',
-			  0.7:'HeavyHome',
-			  0.6:'PopHome',
-			  0.5:'FolkHome',
-			  5.0:'JumpHome',
-			  0.5:'Neutral',
-			  4.0:'JumpAway',
-			  0.4:'FolkAway',
-			  0.3:'PopAway',
-			  0.2:'HeavyAway',
-			  0.1:'HardcoreAway',
-			  0.0:'UltraAway'
+crowd_typedict={0:'C1-UltraHome', 11:'C2-UltraHome',
+				1:'C1-HardcoreHome', 12:'C2-HardcoreHome',
+				2:'C1-HeavyHome', 13:'C2-HeavyHome',
+				3:'C1-PopHome', 14:'C2-PopHome',
+				4:'C1-FolkHome', 15:'C2-FolkHome',
+				5:'C1-Neutral', 16:'C2-Neutral',
+				6:'C1-FolkAway', 17:'C2-FolkAway',
+				7:'C1-PopAway', 18:'C2-PopAway',
+				8:'C1-HeavyAway', 19:'C2-HeavyAway',
+				9:'C1-HardcoreAway', 20:'C2-HardcoreAway',
+				10:'C1-UltraAway', 21:'C2-UltraAway'
 }
 
-behavior=[('UltraHome', 'UltraHome', 'UltraHome'),
-		   ('HardcoreHome', 'HardcoreHome', 'HardcoreHome'),
-		   ('HeavyHome', 'HeavyHome', 'HeavyHome'),
-		   ('PopHome', 'PopHome', 'PopHome'),
-		   ('FolkHome', 'FolkHome', 'FolkHome'),
-		   ('JumpHome', 'JumpHome', 'JumpHome'),
-		   ('Neutral', 'Neutral', 'Neutral'),
-		   ('JumpAway', 'JumpAway', 'JumpAway'),
-		   ('FolkAway', 'FolkAway', 'FolkAway'),
-		   ('PopAway', 'PopAway', 'PopAway'),
-		   ('HeavyAway', 'HeavyAway', 'HeavyAway'),
-		   ('HardcoreAway', 'HardcoreAway', 'HardcoreAway'),
-		   ('UltraAway', 'UltraAway', 'UltraAway')
+behavior=[('C1-UltraHome', 'C1-UltraHome', 'Stance Type : Normal'),
+		   ('C1-HardcoreHome', 'C1-HardcoreHome', 'Stance Type : Normal'),
+		   ('C1-HeavyHome', 'C1-HeavyHome', 'Stance Type : Normal'),
+		   ('C1-PopHome', 'C1-PopHome', 'Stance Type : Normal'),
+		   ('C1-FolkHome', 'C1-FolkHome', 'Stance Type : Normal'),
+		   ('C1-Neutral', 'C1-Neutral', 'Stance Type : Normal'),
+		   ('C1-FolkAway', 'C1-FolkAway', 'Stance Type : Normal'),
+		   ('C1-PopAway', 'C1-PopAway', 'Stance Type : Normal'),
+		   ('C1-HeavyAway', 'C1-HeavyAway', 'Stance Type : Normal'),
+		   ('C1-HardcoreAway', 'C1-HardcoreAway', 'Stance Type : Normal'),
+		   ('C1-UltraAway', 'C1-UltraAway', 'Stance Type : Normal'),
+		   ('C2-UltraHome', 'C2-UltraHome', 'Stance Type : Standing'),
+		   ('C2-HardcoreHome', 'C2-HardcoreHome', 'Stance Type : Standing'),
+		   ('C2-HeavyHome', 'C2-HeavyHome', 'Stance Type : Standing'),
+		   ('C2-PopHome', 'C2-PopHome', 'Stance Type : Standing'),
+		   ('C2-FolkHome', 'C2-FolkHome', 'Stance Type : Standing'),
+		   ('C2-Neutral', 'C2-Neutral', 'Stance Type : Standing'),
+		   ('C2-FolkAway', 'C2-FolkAway', 'Stance Type : Standing'),
+		   ('C2-PopAway', 'C2-PopAway', 'Stance Type : Standing'),
+		   ('C2-HeavyAway', 'C2-HeavyAway', 'Stance Type : Standing'),
+		   ('C2-HardcoreAway', 'C2-HardcoreAway', 'Stance Type : Standing'),
+		   ('C2-UltraAway', 'C2-UltraAway', 'Stance Type : Standing')
 ]
 
 parentlist, shaders=[],[]
@@ -2365,18 +2370,18 @@ def Crowd_Import(filename, c_par):
 	audifile.seek(0x08, 0)  #skip first 8 bytes in header ... unknown? i.e. jump to offset 0x08 in file
 	#let's read all 12 pointers for 12 sides in total
 	for i in range(12):
-		side_group_ptr = struct.unpack('<I', audifile.read(4))[0]  # 32-bit int at offset 8 in header
+		side_group_ptr = unpack('<I', audifile.read(4))[0]  # 32-bit int at offset 8 in header
 		side_pointers.append(side_group_ptr)
 	
 	for side_group_ptr in side_pointers:
 		audifile.seek(side_group_ptr, 0)  # 0 at 2nd param means absolute offset, from file start, not relative to current position
-		side = struct.unpack('B', audifile.read(1))[0] # audiarea side
-		level = struct.unpack('B', audifile.read(1))[0] # audiarea levels, mean level of side
+		side = unpack('B', audifile.read(1))[0] # audiarea side
+		level = unpack('B', audifile.read(1))[0] # audiarea levels, mean level of side
 	   
-		group_len = struct.unpack('H', audifile.read(2))[0] # unsigned short len of group
+		group_len = unpack('H', audifile.read(2))[0] # unsigned short len of group
 		if group_len > 0:
 			# read the address of the 1st group:
-			groups_start = struct.unpack('<I', audifile.read(4))[0]  # 1st pointer - 32-bit int at offset 4 bytes after group_len
+			groups_start = unpack('<I', audifile.read(4))[0]  # 1st pointer - 32-bit int at offset 4 bytes after group_len
 			# jump where 1st pointer tells you
 			audifile.seek(groups_start, 0)  # again, absolute offset, from the start of the file
 			
@@ -2391,30 +2396,72 @@ def Crowd_Import(filename, c_par):
 			for g in range(group_len):
 				# skip the initial 0x18 bytes in group (0x18 bytes before "Len of mesh (faces)"
 				audifile.seek(0x18, 1)  # very important - 2nd param for seek is 1 - this jump is RELATIVE to the old position in file!
-				mesh_len =  struct.unpack('<2H', audifile.read(4))[0] # unsigned short len of faces
+				mesh_len =  unpack('<2H', audifile.read(4))[0] # unsigned short len of faces
 				
 				for u in range(mesh_len):
-					unk0_float =  struct.unpack('<1f', audifile.read(4))[0] # float
-					unk0_uint =  struct.unpack('<I', audifile.read(4))[0] # unsigned int
-					c_type =  struct.unpack('<2f', audifile.read(8))[0] # float Crowd type
+					unk0_float =  unpack('<1f', audifile.read(4))[0] # float
+					unk0_uint = unpack('<I', audifile.read(4))[0] # unsigned int
+					c_type =  unpack('<2f', audifile.read(8))[0] # float Crowd type
 					crowd_type=c_type	
 					
 					face = []
 					for w in range(4): # data of vertices
-						ver = struct.unpack('<3f', audifile.read(12))
+						ver = unpack('<3f', audifile.read(12))
 						verts.append(ver)
 						face.append(num)
 						num += 1
 					for m in range(4): # data of uvs
-						uvs=struct.unpack('<2f', audifile.read(8))
+						uvs = unpack('<2f', audifile.read(8))
 						uvmap.append(uvs)
 					faces.append(face)
 
-					# get audiarea type data
-					for c in crowd_typedict:
-						if str(c) in str(crowd_type):
-							if str(crowd_type) not in c_typeVlist:
-								c_typeVlist.append((crowd_typedict[c], face))
+					# get audiarea type normal
+					if crowd_type <= 1.0 and crowd_type >= 0.90:
+						c_typeVlist.append((crowd_typedict[0], face))
+					elif crowd_type <= 0.90 and crowd_type >= 0.86:
+						c_typeVlist.append((crowd_typedict[1], face))
+					elif c_type <= 0.86 and crowd_type >= 0.80:
+						c_typeVlist.append((crowd_typedict[2], face))
+					elif c_type <= 0.80 and crowd_type >= 0.70:
+						c_typeVlist.append((crowd_typedict[3], face))
+					elif c_type <= 0.70 and crowd_type >= 0.60:
+						c_typeVlist.append((crowd_typedict[4], face))
+					elif c_type <= 0.60 and crowd_type >= 0.50:
+						c_typeVlist.append((crowd_typedict[5], face))
+					elif c_type <= 0.50 and crowd_type >= 0.40:
+						c_typeVlist.append((crowd_typedict[6], face))
+					elif c_type <= 0.40 and crowd_type >= 0.30:
+						c_typeVlist.append((crowd_typedict[7], face))
+					elif c_type <= 0.30 and crowd_type >= 0.20:
+						c_typeVlist.append((crowd_typedict[8], face))
+					elif c_type <= 0.20 and crowd_type >= 0.10:
+						c_typeVlist.append((crowd_typedict[9], face))
+					elif c_type <= 0.10 and crowd_type >= 0.00:
+						c_typeVlist.append((crowd_typedict[10], face))
+					# get audiarea type standing
+					elif crowd_type <= 3.0 and crowd_type >= 2.90:
+						c_typeVlist.append((crowd_typedict[11], face))
+					elif crowd_type <= 2.90 and crowd_type >= 2.86:
+						c_typeVlist.append((crowd_typedict[12], face))
+					elif c_type <= 2.86 and crowd_type >= 2.80:
+						c_typeVlist.append((crowd_typedict[13], face))
+					elif c_type <= 2.80 and crowd_type >= 2.70:
+						c_typeVlist.append((crowd_typedict[14], face))
+					elif c_type <= 2.70 and crowd_type >= 2.60:
+						c_typeVlist.append((crowd_typedict[15], face))
+					elif c_type <= 2.60 and crowd_type >= 2.50:
+						c_typeVlist.append((crowd_typedict[16], face))
+					elif c_type <= 2.50 and crowd_type >= 2.40:
+						c_typeVlist.append((crowd_typedict[17], face))
+					elif c_type <= 2.40 and crowd_type >= 2.30:
+						c_typeVlist.append((crowd_typedict[18], face))
+					elif c_type <= 2.30 and crowd_type >= 2.20:
+						c_typeVlist.append((crowd_typedict[19], face))
+					elif c_type <= 2.20 and crowd_type >= 2.10:
+						c_typeVlist.append((crowd_typedict[20], face))
+					elif c_type <= 2.10 and crowd_type >= 2.00:
+						c_typeVlist.append((crowd_typedict[21], face))
+
 			print("\n")
 			print("*"*28)
 			print("Audiarea Side:",crowd_name)
@@ -2444,7 +2491,10 @@ def Crowd_Import(filename, c_par):
 				crowd_type_name=crowd_num_type[0]
 				if crowd_type_name not in vg:
 					vg.new(name=crowd_type_name)
-					print("Audiarea Type:",crowd_type_name)
+					if "C1" in crowd_type_name:
+						print("Audiarea Type: %s -> Stance Type: Normal"%crowd_type_name)
+					else:
+						print("Audiarea Type: %s -> Stance Type: Standing"%crowd_type_name)
 				vg[crowd_type_name].add(crowd_num_type[1], 1.0, 'ADD')
 			print("*"*28)
 				
@@ -2904,13 +2954,13 @@ def lightfximport(fname):
 
 	lockstar=open(fname, 'rb')
 	lockstar.seek(0xf0)
-	lamp_len = struct.unpack('4b', lockstar.read(4))[0]
+	lamp_len = unpack('4b', lockstar.read(4))[0]
 	lockstar.seek(0x100)
 	side=str()
 	for i in range(lamp_len):
-		lamp_data_x = struct.unpack('4f', lockstar.read(16))
-		lamp_data_y = struct.unpack('4f', lockstar.read(16))
-		lamp_data_z = struct.unpack('4f', lockstar.read(16))
+		lamp_data_x = unpack('4f', lockstar.read(16))
+		lamp_data_y = unpack('4f', lockstar.read(16))
+		lamp_data_z = unpack('4f', lockstar.read(16))
 		Enegy=lamp_data_y[0]
 		if Enegy == 1.0:
 			Enegy=lamp_data_z[3]
@@ -4054,7 +4104,7 @@ def register():
 	bpy.types.Scene.fixmeshesmooth = BoolProperty(name="FIX-Smooth Meshes", default=True)
 	bpy.types.Scene.useFastConvertTexture = BoolProperty(name="Skip Non-Modified textures", default=True)
 
-	bpy.types.Scene.crowd_row_space = FloatProperty(name=" ",step=1,subtype='FACTOR',default=5.0,min=0.0,max=10.0,description="Set a value for vertical space of seat rows. (Default: 5.00)")   
+	bpy.types.Scene.crowd_row_space = FloatProperty(name=" ",step=1,subtype='FACTOR',default=5.0,min=0.0,max=50.0,description="Set a value for vertical space of seat rows. (Default: 5.00)")   
 	bpy.types.Object.droplist = EnumProperty(name="Parent List", items=parentlist)
 
 	bpy.types.Scene.texture_path = StringProperty(name="Texture Path", subtype='DIR_PATH')
