@@ -69,7 +69,6 @@ GZSPATH = '"%s\\addons\\Tools\\Gzs\\GzsTool.exe"' % AddonsPath
 foxTools = '"%s\\addons\\Tools\\Gzs\\FoxTool\\FoxTool.exe"' % AddonsPath 
 icons_dir = '%s\\addons\\Tools\\Gzs\\icons' % AddonsPath
 xml_dir = '%s\\addons\\Tools\\Gzs\\xml\\' % AddonsPath
-uvDataFile = '%s\\addons\\Tools\\Gzs\\uvMapData.bin' % AddonsPath
 lightFxPath = '%s\\addons\\Tools\\Gzs\\' % AddonsPath
 baseStartupFile = '%s\\addons\\Tools\\Gzs\\startup.blend' % AddonsPath
 startupFile = '%sconfig\\startup.blend'%AddonsPath[:-7]
@@ -2592,66 +2591,33 @@ class Import_Crowd_OT(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
-
-def uv_Data(partList, obj_part):
-	if bpy.ops.object.mode_set():
-		bpy.ops.object.mode_set(mode='OBJECT')
-	bpy.ops.object.select_all(action='DESELECT')
-	for ob in bpy.data.objects:
-		if ob.parent and ob.parent.name == partList:
-			ob.select_set(True)
-
-	bpy.ops.object.transform_apply(location=1,rotation=1,scale=1)
-	bpy.ops.object.select_all(action='DESELECT')
-
-	def uv_data(obj):
-		
-		mesh=obj.data
-		mesh.update(calc_edges=1, calc_edges_loose=1)
-		for loop in mesh.loops :
-			uv_coords = mesh.uv_layers.active.data[loop.index].uv
-			uvfileWrite.write(pack("2f",float(uv_coords[0]),float(uv_coords[1])))
-		
-	uvfileWrite=open(uvDataFile,"wb")
-	off_list,cr_list_temp = [],[]
-	
-	for cr in bpy.data.objects[partList].children:
-		cr_list_temp.append(cr.name)
-	for ob in obj_part:
-		if ob in cr_list_temp:
-			uv_data(bpy.data.objects[ob])
-		else:
-			off_list.append(0)
-	if bpy.ops.object.mode_set():
-		bpy.ops.object.mode_set(mode='OBJECT')
-	bpy.ops.object.select_all(action='DESELECT')
-	uvfileWrite.flush(),uvfileWrite.close()
-	
-def crowd_exp(outpath, partList, obj_part):
+def Crowd_Export(outpath, partList, obj_part):
 	scn = bpy.context.scene
 		
 	def crowd(obj):
-		print("*"*20)
-		print(obj.name)
-		off1=cr_file.tell()
+		print("\n")
+		print("***"*20)
+		print("Audiarea Side:",obj.name)
+		off1=audifile.tell()
 		off_list.append(off1)
-		cr_file.write(pack("I",crowd_part_type[obj_part.index(obj.name)]))
-		cr_file.write(pack("I",off1+8))
+		audifile.write(pack("I",crowd_part_type[obj_part.index(obj.name)]))
+		audifile.write(pack("I",off1+8))
 		bsize=obj.bound_box[3][:],obj.bound_box[5][:]
 		mesh=obj.data
 		mesh.update(calc_edges=1, calc_edges_loose=1)	
 		ud=0
+		num=0
 		if str(obj.name).split("_")[1][:1] in ["l","r"]:
 			ud=1
-		cr_file.write(pack("6f",bsize[0][0],bsize[0][2],bsize[0][1]*-1,bsize[1][0],bsize[1][2],bsize[1][1]*-1))
-		cr_file.write(pack("I",len(mesh.polygons)))
+		audifile.write(pack("6f",bsize[0][0],bsize[0][2],bsize[0][1]*-1,bsize[1][0],bsize[1][2],bsize[1][1]*-1))
+		audifile.write(pack("I",len(mesh.polygons)))
 		for f, face in enumerate(mesh.polygons):
 			vec1,vec2,idx1,idx2,vlist=[],[],[],[],[]
 			row,g=float(),0x0
 			v1,v2,v3,v4=0,0,0,0
 			for v in enumerate(face.vertices):
-				uvface = mesh.uv_layers[0].data[face.index]
-				fuv=uvface.uv
+				fuv=mesh.uv_layers.active.data[num].uv
+				num+=1
 				if scn.part_info == "AUDIAREA":
 					g = mesh.vertices[v[1]].groups[0]
 				if mesh.vertices[v[1]].co.z > face.center.z:
@@ -2696,41 +2662,46 @@ def crowd_exp(outpath, partList, obj_part):
 			if scn.part_info == "AUDIAREA":
 				stancename = obj.vertex_groups[g.group].name
 				ha = crowd_type[stancename]
+				if not stancename in stancelist:
+					stancelist.append(stancename)
 			else:
 				ha = 1
 			row2=round((row/(5.0+scn.crowd_row_space)),1)
-			cr_file.write(pack("I",f))
-			cr_file.write(pack("3f",row2,ha,ha))
+			audifile.write(pack("I",f))
+			audifile.write(pack("3f",row2,ha,ha))
 			for w in vlist:
-				cr_file.write(pack("3f",w[0][0],w[0][2],w[0][1]*-1))
-			for w in vlist:
-				uvm=unpack("2f",uvfile.read(8))
-				cr_file.write(pack("2f",uvm[0],uvm[1]))
+				audifile.write(pack("3f",w[0][0],w[0][2],w[0][1]*-1))
+			for m in vlist:
+				audifile.write(pack("2f",m[1],m[2]))
 
 	outpath_crowd_data = outpath
-	uvfile=open(uvDataFile,"rb")
-	cr_file=open(outpath_crowd_data,"wb")
-	cr_file.write(pack("2I48s",1,1,"".encode()))
+	audifile=open(outpath_crowd_data,"wb")
+	audifile.write(pack("2I48s",1,1,"".encode()))
 	off_list,cr_list_temp = [],[]
-	
+	stancelist=[]
 	for cr in bpy.data.objects[partList].children:
 		cr_list_temp.append(cr.name)
-
 	for ob in obj_part:
 		if ob in cr_list_temp:
 			crowd(bpy.data.objects[ob])
+			for stance in stancelist:
+				if "C1" in stance:
+					print("Audiarea Type: %s -> Stance Type: Normal"%stance)
+				else:
+					print("Audiarea Type: %s -> Stance Type: Standing Non-chair"%stance)
+			stancelist.clear()
+			print("***"*20)
 		else:
 			off_list.append(0)
-	cr_file.seek(8,0)
+	audifile.seek(8,0)
 	for o in enumerate(off_list):
-		cr_file.write(pack("I",o[1]))
-	cr_file.flush(),cr_file.close()
-	uvfile.flush(),uvfile.close()
+		audifile.write(pack("I",o[1]))
+	print("\n")
+	audifile.flush(),audifile.close()
 
 	if bpy.ops.object.mode_set():
 		bpy.ops.object.mode_set(mode='OBJECT')
 	bpy.ops.object.select_all(action='DESELECT')
-	remove_file(uvDataFile)
 
 class Crowd_OT(bpy.types.Operator):
 	"""Export Crowd"""
@@ -2771,15 +2742,13 @@ class Crowd_OT(bpy.types.Operator):
 				return {'CANCELLED'}
 			try:
 				print("\nStarting Crowd Parts Exporting...")
-				#Write uv data for audiarea
-				uv_Data('MESH_CROWD', crowd_part)
 				#Create fpk for audiarea
 				assetDirname = "/Assets/pes16/model/bg/%s/audi/" % stid
 				makeXML(context.scene.export_path+"audi\\#Win\\audiarea_%s"%stid+".fpk.xml", assetDirname+"audiarea.bin", "audiarea_%s.fpk"%stid,"Fpk","FpkFile", False)
 				assetDir = os.path.join(context.scene.export_path,"audi", "#Win", "audiarea_%s_fpk"%stid, "Assets","pes16","model","bg",stid,"audi\\audiarea.bin")
 				dir_to_remove = os.path.join(context.scene.export_path,"audi", "#Win", "audiarea_%s_fpk"%stid)
 				makedir("audi\\#Win\\audiarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\audi".format(stid,stid),True)
-				crowd_exp(assetDir,'MESH_CROWD', crowd_part)
+				Crowd_Export(assetDir,'MESH_CROWD', crowd_part)
 				pack_unpack_Fpk(dir_to_remove[:-4]+".fpk.xml")
 				remove_dir(dir_to_remove)
 				remove_file(dir_to_remove[:-4]+".fpk.xml")
@@ -2845,15 +2814,13 @@ class Flags_Area_OT(bpy.types.Operator):
 				return {'CANCELLED'}
 			try:
 				print("\nStarting Flagarea Exporting...")
-				#Write uv data for Flagarea
-				uv_Data('MESH_FLAGAREA', flags_part)
 				#Create fpk for Flagarea
 				assetDirname = "/Assets/pes16/model/bg/%s/standsFlag/" % stid
 				makeXML(context.scene.export_path+"standsFlag\\#Win\\flagarea_%s"%stid+".fpk.xml", assetDirname+"flagarea.bin", "flagarea_%s.fpk"%stid,"Fpk","FpkFile", False)
 				assetDir = os.path.join(context.scene.export_path,"standsFlag", "#Win", "flagarea_%s_fpk"%stid, "Assets","pes16","model","bg",stid,"standsFlag\\flagarea.bin")
 				dir_to_remove = os.path.join(context.scene.export_path,"standsFlag", "#Win", "flagarea_%s_fpk"%stid)
 				makedir("standsFlag\\#Win\\flagarea_{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\standsFlag".format(stid,stid),True)
-				crowd_exp(assetDir,'MESH_FLAGAREA', flags_part)
+				Crowd_Export(assetDir,'MESH_FLAGAREA', flags_part)
 				pack_unpack_Fpk(dir_to_remove[:-4]+".fpk.xml")
 				remove_dir(dir_to_remove)
 				remove_file(dir_to_remove[:-4]+".fpk.xml")
