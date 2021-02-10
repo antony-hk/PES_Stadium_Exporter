@@ -573,6 +573,7 @@ def exportFmdl(context, rootObjectName, exportSettings=None):
 				yield slot
 		else:
 			return None
+			
 	def exportMaterial(blenderMaterial, textureFmdlObjects):
 		
 		materialInstance = FmdlFile.FmdlFile.MaterialInstance()
@@ -708,12 +709,11 @@ def exportFmdl(context, rootObjectName, exportSettings=None):
 			#
 			# calc_tangents() only works on triangulated meshes
 			#
-			
-			blenderBmesh = bmesh.new()
-			blenderBmesh.from_mesh(modifiedBlenderMesh, face_normals=False)
-			bmesh.ops.triangulate(blenderBmesh, faces=blenderBmesh.faces[:], quad_method='BEAUTY', ngon_method='BEAUTY')
-			blenderBmesh.to_mesh(modifiedBlenderMesh)
-			blenderBmesh.free()
+			bm = bmesh.new()
+			bm.from_mesh(modifiedBlenderMesh)
+			bmesh.ops.triangulate(bm, faces=bm.faces)
+			bm.to_mesh(modifiedBlenderMesh)
+			bm.free()
 		
 		modifiedBlenderMesh.use_auto_smooth = True
 		modifiedBlenderMesh.calc_tangents(uvmap=uvLayerColor)
