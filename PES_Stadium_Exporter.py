@@ -1882,9 +1882,9 @@ class New_STID(bpy.types.Operator):
 				self.report({"WARNING"}, "Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 				print("Selected path is wrong, select like e:g [-->Asset\\model\\bg\\%s<--]!!" % stid)
 				return {'CANCELLED'}
-			self.report( {"INFO"}, " Light FX Exported has been Successfully... " )
 		else:
 			self.report({"WARNING"}, "Stadium ID isn't correct!!")
+			return {'CANCELLED'}
 		for child in bpy.data.objects[context.scene.part_info].children:
 			if child.type == 'EMPTY' and child is not None:
 				for ob in bpy.data.objects[child.name].children:
