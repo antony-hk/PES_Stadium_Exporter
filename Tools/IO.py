@@ -709,11 +709,11 @@ def exportFmdl(context, rootObjectName, exportSettings=None):
 			#
 			# calc_tangents() only works on triangulated meshes
 			#
-			bm = bmesh.new()
-			bm.from_mesh(modifiedBlenderMesh)
-			bmesh.ops.triangulate(bm, faces=bm.faces)
-			bm.to_mesh(modifiedBlenderMesh)
-			bm.free()
+			blenderBmesh = bmesh.new()
+			blenderBmesh.from_mesh(modifiedBlenderMesh)
+			bmesh.ops.triangulate(blenderBmesh, faces=blenderBmesh.faces)
+			blenderBmesh.to_mesh(modifiedBlenderMesh)
+			blenderBmesh.free()
 		
 		modifiedBlenderMesh.use_auto_smooth = True
 		modifiedBlenderMesh.calc_tangents(uvmap=uvLayerColor)
