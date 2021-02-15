@@ -3531,6 +3531,13 @@ class Export_TV(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
+TexDimensions=["16","32","64","128","192","256","320","384","448","512","576","640","704","768","832","896",
+			"960","1024","1088","1152","1216","1280","1344","1408","1472","1536","1600","1664","1728",
+			"1792","1856","1920","1984","2048","2112","2176","2240","2304","2368","2432","2496","2560",
+			"2624","2688","2752","2816","2880","2944","3008","3072","3136","3200","3264","3328","3392",
+			"3456","3520","3584","3648","3712","3776","3840","3904","3968","4032","4096"
+]
+
 class Convert_OT(bpy.types.Operator):
 	"""Export and Convert all texture to FTEX"""
 	bl_idname = "convert.operator"
@@ -3660,6 +3667,20 @@ class Convert_OT(bpy.types.Operator):
 												print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node ({4})"
 														.format(context.scene.part_info, ob.parent.name,ob2.parent.name, ob2.name, nodes.name))
 												return {'CANCELLED'}
+											
+											width = nodes.image.size[0]
+											height = nodes.image.size[1]
+											print (f"Texture Dimensions:({width} x {height})")
+											if width > 4096 or height > 4096:
+												self.report({"WARNING"}, "Error when converting, texture dimensions out of range, check in Blender Console => Window -> Toggle System Console !!")
+												print("\nTexture dimensions out of range")
+												print (f"Check out texture in -> Texture Filename: ({filenames + extension}), Texture Dimensions: ({width} x {height})")
+												return {'CANCELLED'}
+											if not str(width) in TexDimensions or not str(height) in TexDimensions:
+												self.report({"WARNING"}, "Error when converting, texture dimensions isn't correct, check in Blender Console => Window -> Toggle System Console !!")
+												print("\nTexture dimensions isn't correct")
+												print (f"Check out texture in -> Texture Filename: ({filenames + extension}), Texture Dimensions: ({width} x {height})")
+												return {'CANCELLED'}
 											if os.path.isfile(inPath):
 												convert_dds(inPath, outpath)
 												print("Converting texture from object->({0}) in node->({1})-->({2}) ==> ({3}ftex) ".format(
@@ -3670,7 +3691,7 @@ class Convert_OT(bpy.types.Operator):
 													try:
 														os.remove(inPath)
 													except Exception as msg:
-														self.report({"INFO"}, format(msg))
+														self.report({"WARNING"}, format(msg))
 														return {'CANCELLED'}
 		self.report({"INFO"}, "Converting texture succesfully...!")
 		print("Converting texture succesfully...!")
