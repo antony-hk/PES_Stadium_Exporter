@@ -47,7 +47,7 @@ bl_info = {
 	"name": "PES Stadium Exporter",
 	"description": "eFootbal PES2021 PES Stadium Exporter",
 	"author": "MjTs-140914 || the4chancup",
-	"version": (0, 6, 3),
+	"version": (0, 6, 4),
 	"blender": (2, 90, 0),
 	"location": "Under Scene Tab",
 	"warning": "This addon is still in development.",
@@ -58,7 +58,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.6.3b"
+myver="v0.6.4b"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
