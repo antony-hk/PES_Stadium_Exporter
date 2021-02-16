@@ -2592,8 +2592,17 @@ class Import_Crowd_OT(bpy.types.Operator):
 	pass
 
 def Crowd_Export(outpath, partList, obj_part):
+
 	scn = bpy.context.scene
-		
+	if bpy.ops.object.mode_set():
+		bpy.ops.object.mode_set(mode='OBJECT')
+	bpy.ops.object.select_all(action='DESELECT')
+	for ob in bpy.data.objects:
+		if ob.parent and ob.parent.name == partList:
+			ob.select_set(True)
+	bpy.ops.object.transform_apply(location=1,rotation=1,scale=1)
+	bpy.ops.object.select_all(action='DESELECT')
+	
 	def crowd(obj):
 		print("\n")
 		print("***"*20)
