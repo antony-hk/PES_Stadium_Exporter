@@ -3709,7 +3709,7 @@ class Convert_OT(bpy.types.Operator):
 											width = nodes.image.size[0]
 											height = nodes.image.size[1]
 											print (f"Texture Dimensions:({width} x {height})")
-											if width > 4096 or height > 4096:
+											if width > 7680 or height > 7680:
 												self.report({"WARNING"}, "Error when converting, texture dimensions out of range, check in Blender Console => Window -> Toggle System Console !!")
 												print("\nTexture dimensions out of range")
 												print (f"Check out texture in -> Texture Filename: ({filenames + extension}), Texture Dimensions: ({width} x {height})")
