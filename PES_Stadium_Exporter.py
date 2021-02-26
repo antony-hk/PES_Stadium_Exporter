@@ -1533,7 +1533,6 @@ class Stadium_Banner(bpy.types.Operator):
 			dirRemove="%scheer\\#Win\\cheer_%s_h_a1_fpk"% (exportPath,stid)
 			fileRemove="%scheer\\#Win\\cheer_%s_h_a1.fpk.xml"% (exportPath,stid)
 
-			
 			if context.scene.fmdl_import_load_textures:	
 				for texname in ["banner_dumy_bsm.ftex","banner_lbm.ftex","banner_lym.ftex","banner_nrm.ftex",
 								"banner_srm.ftex","banner2_dumy_bsm.ftex","banner2_lym.ftex","banner2_nrm.ftex"]:
@@ -2328,40 +2327,6 @@ def export_fmdl(self, context, fileName, meshID, objName):
 	fmdlFile.writeFile(fileName)
 	return 1
 
-def reports(self, context):
-	for child in bpy.data.objects[context.scene.part_info].children:
-		for ob in bpy.data.objects[child.name].children:
-			if ob.type == 'MESH' and ob.data is not None:
-				uv = bpy.data.meshes[ob.data.name].uv_layers
-				mat = bpy.data.objects[ob.name].material_slots
-				if len(uv) == 0:
-					context.scene.isActive = True
-					context.scene.report_msg = "Mesh [%s] does not have a primary UV map set!" % ob.name
-					print("Mesh [%s] does not have a primary UV map set!" % ob.name)
-				elif len(uv) >= 3:
-					context.scene.isActive = True
-					context.scene.report_msg = "Mesh [%s] too much UVMap slots, need to remove!" % ob.name
-					print("Mesh [%s] too much UVMap slots, need to remove!" % ob.name)
-				elif len(uv) == 1:
-					if uv[0].name != 'UVMap':
-						context.scene.isActive = True
-						context.scene.report_msg = "Mesh [%s] UVMap name isn't correct!" % ob.name
-						print("Mesh [%s] UVMap name isn't correct!" % ob.name)
-				elif len(uv) == 2:
-					if uv[1].name != 'normal_map':
-						context.scene.isActive = True
-						context.scene.report_msg = "Mesh [%s] normal_map name isn't correct!" % ob.name
-						print("Mesh [%s] normal_map name isn't correct!" % ob.name)
-				if len(mat) == 0:
-					context.scene.isActive = True
-					context.scene.report_msg = "Mesh [%s] does not have an associated material!" % ob.name
-					print("Mesh [%s] does not have an associated material!" % ob.name)
-				if len(mat) >= 2:
-					context.scene.isActive = True
-					context.scene.report_msg = "Mesh [%s] too much material slots need to remove!" % ob.name
-					print("Mesh [%s] too much material slots need to remove!" % ob.name)
-	return 1
-
 def Crowd_Import(filename, c_par):
 
 	side_pointers = []
@@ -3122,6 +3087,43 @@ class Import_lightfx_OT(bpy.types.Operator):
 		return {'FINISHED'}
 	pass
 
+def checkMeshMaterialUvs(self, context):
+	for child in bpy.data.objects[context.scene.part_info].children:
+		if child.type == 'EMPTY' and child is not None:
+			for ob in bpy.data.objects[child.name].children:
+				if ob is not None:
+					for ob2 in bpy.data.objects[ob.name].children:
+						if ob2 is not None:
+							uv = bpy.data.meshes[ob2.data.name].uv_layers
+							mat = bpy.data.objects[ob2.name].material_slots
+							if len(uv) == 0:
+								self.report({"WARNING"}, "Mesh [%s] does not have a primary UV map set!" % ob2.name)
+								print("Mesh [%s] does not have a primary UV map set!" % ob2.name)
+								return True
+							elif len(uv) >= 3:
+								self.report({"WARNING"}, "Mesh [%s] too much UVMap slots, need to remove!" % ob2.name)
+								print("Mesh [%s] too much UVMap slots, need to remove!" % ob2.name)
+								return True
+							elif len(uv) == 1:
+								if uv[0].name != 'UVMap':
+									self.report({"WARNING"}, "Mesh [%s] UVMap name isn't correct!" % ob2.name)
+									print("Mesh [%s] UVMap name isn't correct!" % ob2.name)
+									return True
+							elif len(uv) == 2:
+								if uv[1].name != 'normal_map':
+									self.report({"WARNING"}, "Mesh [%s] normal_map name isn't correct!" % ob2.name)
+									print("Mesh [%s] normal_map name isn't correct!" % ob2.name)
+									return True
+							if len(mat) == 0:
+								self.report({"WARNING"}, "Mesh [%s] does not have an associated material!" % ob2.name)
+								print("Mesh [%s] does not have an associated material!" % ob2.name)
+								return True
+							if len(mat) >= 2:
+								self.report({"WARNING"}, "Mesh [%s] too much material slots need to remove!" % ob2.name)
+								print("Mesh [%s] too much material slots need to remove!" % ob2.name)
+								return True
+	return False
+
 class Export_OT(bpy.types.Operator):
 	"""Export Stadium"""
 	bl_idname = "export_stadium.operator"
@@ -3136,11 +3138,7 @@ class Export_OT(bpy.types.Operator):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
 
-		reports(self, context)
-		if context.scene.isActive:
-			self.report({"WARNING"}, context.scene.report_msg)
-			context.scene.report_msg = str()
-			context.scene.isActive = False
+		if checkMeshMaterialUvs(self, context):
 			return {'CANCELLED'}
 
 		if len(stid) == 5:
@@ -3255,12 +3253,6 @@ class Pitch_Objects(bpy.types.Operator):
 	def execute(self, context):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
-		reports(self, context)
-		if context.scene.isActive:
-			self.report({"WARNING"}, context.scene.report_msg)
-			context.scene.report_msg = str()
-			context.scene.isActive = False
-			return {'CANCELLED'}
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
@@ -3308,6 +3300,10 @@ class Pitch_Objects(bpy.types.Operator):
 			self.report({"INFO"}, "Load Pitch succesfully...!")
 			return {'FINISHED'}
 		if self.opname == "pitch_export":
+
+			if checkMeshMaterialUvs(self, context):
+				return {'CANCELLED'}
+
 			checks=checkStadiumID(context, True)
 			if checks:
 				self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
@@ -3363,13 +3359,10 @@ class ExportStadium_AD(bpy.types.Operator):
 	def execute(self, context):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
-		reports(self, context)
-		if context.scene.isActive:
-			self.report({"WARNING"}, context.scene.report_msg)
-			context.scene.report_msg = str()
-			context.scene.isActive = False
-			return {'CANCELLED'}
 
+		if checkMeshMaterialUvs(self, context):
+			return {'CANCELLED'}
+			
 		if len(stid) == 5:
 			if context.scene.export_path == str():
 				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
@@ -3455,12 +3448,6 @@ class Export_TV(bpy.types.Operator):
 	def execute(self, context):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
-		reports(self, context)
-		if context.scene.isActive:
-			self.report({"WARNING"}, context.scene.report_msg)
-			context.scene.report_msg = str()
-			context.scene.isActive = False
-			return {'CANCELLED'}
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
@@ -3502,6 +3489,34 @@ class Export_TV(bpy.types.Operator):
 				TvOb.append(child.name)
 				for ob in bpy.data.objects[child.name].children[:1]:
 					if ob is not None:
+						uv = bpy.data.meshes[ob.data.name].uv_layers
+						mat = bpy.data.objects[ob.name].material_slots
+						if len(uv) == 0:
+							self.report({"WARNING"}, "Mesh [%s] does not have a primary UV map set!" % ob.name)
+							print("Mesh [%s] does not have a primary UV map set!" % ob.name)
+							return {'CANCELLED'}
+						elif len(uv) >= 3:
+							self.report({"WARNING"}, "Mesh [%s] too much UVMap slots, need to remove!" % ob.name)
+							print("Mesh [%s] too much UVMap slots, need to remove!" % ob.name)
+							return {'CANCELLED'}
+						elif len(uv) == 1:
+							if uv[0].name != 'UVMap':
+								self.report({"WARNING"}, "Mesh [%s] UVMap name isn't correct!" % ob.name)
+								print("Mesh [%s] UVMap name isn't correct!" % ob.name)
+								return {'CANCELLED'}
+						elif len(uv) == 2:
+							if uv[1].name != 'normal_map':
+								self.report({"WARNING"}, "Mesh [%s] normal_map name isn't correct!" % ob.name)
+								print("Mesh [%s] normal_map name isn't correct!" % ob.name)
+								return {'CANCELLED'}
+						if len(mat) == 0:
+							self.report({"WARNING"}, "Mesh [%s] does not have an associated material!" % ob.name)
+							print("Mesh [%s] does not have an associated material!" % ob.name)
+							return {'CANCELLED'}
+						if len(mat) >= 2:
+							self.report({"WARNING"}, "Mesh [%s] too much material slots need to remove!" % ob.name)
+							print("Mesh [%s] too much material slots need to remove!" % ob.name)
+							return {'CANCELLED'}
 						print('\n***************************************')
 						fmdlName = child.name
 						TvMdl.append(fmdlName)
@@ -3588,12 +3603,6 @@ class Convert_OT(bpy.types.Operator):
 	def execute(self, context):
 		stid = context.scene.STID
 		filePath = str()
-		reports(self, context)
-		if context.scene.isActive:
-			self.report({"WARNING"}, context.scene.report_msg)
-			context.scene.report_msg = str()
-			context.scene.isActive = False
-			return {'CANCELLED'}
 
 		# Checking stadium id length, otherwise stadium id not length 5 he will error
 		if len(stid) == 5:
@@ -4139,8 +4148,6 @@ def register():
 	bpy.types.Scene.part_info = EnumProperty(name="Part List", items=part_export)
 	bpy.types.Scene.STID = StringProperty(name="ID", default="st081")
 
-	bpy.types.Scene.isActive = BoolProperty(name=str(), default=False)
-	bpy.types.Scene.report_msg = StringProperty(name=str())
 	bpy.types.Scene.crowd_type_enum = EnumProperty(items=behavior,name='Type')
 	
 	bpy.types.Scene.tvobject = EnumProperty(name="TV",items=[("tv_large_c","tv_large_c","tv_large_c"),
