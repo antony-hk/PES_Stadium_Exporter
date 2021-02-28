@@ -34,20 +34,18 @@
 #     zlac
 # '''
 
-
 import bpy, os, bpy.utils.previews, bpy_extras, shutil, bmesh, re, math
 from struct import pack,unpack
 from bpy.props import (EnumProperty, CollectionProperty, IntProperty, StringProperty, BoolProperty, FloatProperty, FloatVectorProperty)
 from Tools import FmdlFile, Ftex, IO, PesFoxShader, PesFoxXML, PesEnlighten, PesScarecrow, PesStaff
 from xml.dom import minidom
-from xml.dom.minidom import parse
 from mathutils import Vector
 
 bl_info = {
 	"name": "PES Stadium Exporter",
 	"description": "eFootbal PES2021 PES Stadium Exporter",
 	"author": "MjTs-140914 || the4chancup",
-	"version": (0, 6, 5),
+	"version": (0, 6, 6),
 	"blender": (2, 90, 0),
 	"location": "Under Scene Tab",
 	"warning": "This addon is still in development.",
@@ -58,7 +56,7 @@ bl_info = {
 
 (major, minor, build) = bpy.app.version
 icons_collections = {}
-myver="v0.6.5b"
+myver="v0.6.6b"
 
 AddonsPath = str()
 AddonsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
@@ -84,9 +82,9 @@ parent_main_list=["MESH_back1","MESH_back2","MESH_back3",
 				 "MESH_left1","MESH_left2","MESH_left3",
 				 "MESH_right1","MESH_right2","MESH_right3",
 				 "MESH_Pitch","MESH_front1_demo","MESH_front1_game",
-				 "MESH_center1_snow","MESH_center1_rain",			 
+				 "MESH_center1_snow","MESH_center1_rain","MESH_center1_tifo",			 
 				 "MESH_ad_acl","MESH_ad_cl","MESH_ad_el","MESH_ad_normal",			 
-				 "MESH_ad_olc","MESH_ad_sc", 
+				 "MESH_ad_olc","MESH_ad_sc",
 				 "MESH_cheer_back1_h_a1","MESH_cheer_front1_h_a1", "MESH_cheer_left1_h_a1", "MESH_cheer_right1_h_a1",
 				 "MESH_cheer_back1_h_a2","MESH_cheer_front1_h_a2", "MESH_cheer_left1_h_a2", "MESH_cheer_right1_h_a2",
 ]
@@ -96,7 +94,7 @@ main_list=["back1","back2","back3",
 		   "front1", "front2","front3",
 		   "left1","left2","left3",
 		   "right1","right2","right3",
-		   "front1_demo","front1_game","center1_snow","center1_rain",
+		   "front1_demo","front1_game","center1_snow","center1_rain","center1_tifo",
 		   "MESH_CROWD","MESH_FLAGAREA","Pitch",
 		   "TV_Large_Left","TV_Large_Right","TV_Large_Front","TV_Large_Back",
 		   "TV_Small_Left","TV_Small_Right","TV_Small_Front","TV_Small_Back",
@@ -186,7 +184,7 @@ datalist=["back1","back2","back3",
 			"front1","front2","front3",
 			"left1","left2","left3",
 			"right1","right2","right3",
-			"center1_snow", "center1_rain",
+			"center1_snow", "center1_rain", "center1_tifo",
 			"front1_game","front1_demo"
 ]
 
@@ -195,8 +193,8 @@ StadiumModel=["StadiumModel_B1","StadiumModel_B2","StadiumModel_B3",
 			"StadiumModel_F1","StadiumModel_F2","StadiumModel_F3",
 			"StadiumModel_L1","StadiumModel_L2","StadiumModel_L3",
 			"StadiumModel_R1","StadiumModel_R2","StadiumModel_R3",
-			"StadiumModel_C1_ForSnow", "StadiumModel_C1_rain",
-			"StadiumModel_F1_game","StadiumModel_F1_demo"
+			"StadiumModel_C1_ForSnow", "StadiumModel_C1_rain", "StadiumModel_C1_tifo",
+			"StadiumModel_F1_game","StadiumModel_F1_demo",
 ]
 
 StadiumKind=[0,1,2,
@@ -204,7 +202,7 @@ StadiumKind=[0,1,2,
 			0,1,2,
 			0,1,2,
 			0,1,2,
-			0,0,
+			0,0,2,
 			14,15
 ]
 StadiumDir=[1,1,1,
@@ -212,7 +210,7 @@ StadiumDir=[1,1,1,
 			0,0,0,
 			2,2,2,
 			3,3,3,
-			4,4,
+			4,4,0,
 			4,4
 ]
 
@@ -221,7 +219,7 @@ transformlist=[0x02D72C40,0x02D72D20,0x02D72E00,
 				0x02D73180,0x02D73260,0x02D73340,
 				0x02D73420,0x02D73570,0x02D73650,
 				0x02D73730,0x02D73810,0x02D73490,
-				0xC11921D0,0x03173880,
+				0xC11921D0,0x03173880,0x031738E4, 
 				0x03173E30,0x03173FF0,
 ]
 
@@ -230,7 +228,7 @@ TransformEntity=[0x03172D20,0x03172EE0,0x03172EE2,
 				0x03173420,0x03173650,0x03173750,
 				0x03173810,0x03173960,0x03173970,
 				0x03173B20,0x03173CE0,0x03173CE5,
-				0xC12714B0,0xC12714B2,
+				0xC12714B0,0xC12714B2,0x03173B3A,
 				0x03173EA0,0x03174060,
 ]
 
@@ -239,7 +237,7 @@ shearTransform=[0x03173F10,0x03173D50,0x03173D60,
 				0x031732CB,0x031732D0,0x031732D2,
 				0x03172D90,0x03172F50,0x03172F52,
 				0x03174140,0x03173180,0x03173182,
-				0x00000000,0xB13C0250,
+				0x00000000,0xB13C0250,0x03173D90,
 				0x03173490,0x031736C0,
 ]
 
@@ -248,7 +246,7 @@ pivotTransform=[0x03173F80,0x03173DC0,0x03173DC2,
 				0x031738F0,0x03173340,0x03173342,
 				0x03172E00,0x03172FC0,0x03172FC2,
 				0x03173110,0x03174290,0x03174292,
-				0x00000000,0x00000000,
+				0x00000000,0x00000000,0x03173FE6,
 				0x03173570,0x03173730,
 ]
 
@@ -258,33 +256,33 @@ cheerhexKey=[0x00000200,0x00000400,0x00000600,0x00000800
 cheerhextfrm=[0x00000300,0x00000500,0x00000700,0x00000900
 ]
 
-crowd_type = {'C1-UltraHome':0.9999, 'C2-UltraHome':2.9999,
-			  'C1-HardcoreHome':0.8999, 'C2-HardcoreHome':2.8999,
-			  'C1-HeavyHome':0.8599, 'C2-HeavyHome':2.8599,
-			  'C1-PopHome':0.7999, 'C2-PopHome':2.7999,
-			  'C1-FolkHome':0.6999, 'C2-FolkHome':2.6999,
-			  'C1-Neutral':0.5, 'C2-Neutral':2.5,
-			  'C1-FolkAway':0.4999, 'C2-FolkAway':2.4999,
-			  'C1-PopAway':0.3999,'C2-PopAway':2.3999,
-			  'C1-HeavyAway':0.2999, 'C2-HeavyAway':2.2999,
-			  'C1-HardcoreAway':0.1999, 'C2-HardcoreAway':2.1999,
-			  'C1-UltraAway':0.0999, 'C2-UltraAway':2.0999
+crowd_type = {'C1-UltraHome':0.9999, 'C2-UltraHome':2.9999, 'C3-UltraHome':4.9999,
+			  'C1-HardcoreHome':0.8999, 'C2-HardcoreHome':2.8999, 'C3-HardcoreHome':4.8999,
+			  'C1-HeavyHome':0.8599, 'C2-HeavyHome':2.8599, 'C3-HeavyHome':4.8599,
+			  'C1-PopHome':0.7999, 'C2-PopHome':2.7999, 'C3-PopHome':4.7999,
+			  'C1-FolkHome':0.6999, 'C2-FolkHome':2.6999, 'C3-FolkHome':4.6999,
+			  'C1-Neutral':0.5, 'C2-Neutral':2.5, 'C3-Neutral':4.5,
+			  'C1-FolkAway':0.4999, 'C2-FolkAway':2.4999, 'C3-FolkAway':4.4999,
+			  'C1-PopAway':0.3999,'C2-PopAway':2.3999,'C3-PopAway':4.3999,
+			  'C1-HeavyAway':0.2999, 'C2-HeavyAway':2.2999, 'C3-HeavyAway':4.2999,
+			  'C1-HardcoreAway':0.1999, 'C2-HardcoreAway':2.1999, 'C3-HardcoreAway':4.1999,
+			  'C1-UltraAway':0.0999, 'C2-UltraAway':2.0999, 'C3-UltraAway':4.0999
 }
 
-crowd_typedict={0:'C1-UltraHome', 11:'C2-UltraHome',
-				1:'C1-HardcoreHome', 12:'C2-HardcoreHome',
-				2:'C1-HeavyHome', 13:'C2-HeavyHome',
-				3:'C1-PopHome', 14:'C2-PopHome',
-				4:'C1-FolkHome', 15:'C2-FolkHome',
-				5:'C1-Neutral', 16:'C2-Neutral',
-				6:'C1-FolkAway', 17:'C2-FolkAway',
-				7:'C1-PopAway', 18:'C2-PopAway',
-				8:'C1-HeavyAway', 19:'C2-HeavyAway',
-				9:'C1-HardcoreAway', 20:'C2-HardcoreAway',
-				10:'C1-UltraAway', 21:'C2-UltraAway'
+crowd_typedict={0:'C1-UltraHome', 11:'C2-UltraHome', 22:'C3-UltraHome',
+				1:'C1-HardcoreHome', 12:'C2-HardcoreHome', 23:'C3-HardcoreHome',
+				2:'C1-HeavyHome', 13:'C2-HeavyHome', 24:'C3-HeavyHome',
+				3:'C1-PopHome', 14:'C2-PopHome', 25:'C3-PopHome',
+				4:'C1-FolkHome', 15:'C2-FolkHome', 26:'C3-FolkHome',
+				5:'C1-Neutral', 16:'C2-Neutral', 27:'C3-Neutral',
+				6:'C1-FolkAway', 17:'C2-FolkAway', 28:'C3-FolkAway',
+				7:'C1-PopAway', 18:'C2-PopAway', 29:'C3-PopAway',
+				8:'C1-HeavyAway', 19:'C2-HeavyAway', 30:'C3-HeavyAway',
+				9:'C1-HardcoreAway', 20:'C2-HardcoreAway', 31:'C3-HardcoreAway',
+				10:'C1-UltraAway', 21:'C2-UltraAway', 32:'C3-UltraAway'
 }
 
-behavior=[('C1-UltraHome', 'C1-UltraHome', 'Stance Type : Normal'),
+behavior0=[('C1-UltraHome', 'C1-UltraHome', 'Stance Type : Normal'),
 		   ('C1-HardcoreHome', 'C1-HardcoreHome', 'Stance Type : Normal'),
 		   ('C1-HeavyHome', 'C1-HeavyHome', 'Stance Type : Normal'),
 		   ('C1-PopHome', 'C1-PopHome', 'Stance Type : Normal'),
@@ -295,19 +293,31 @@ behavior=[('C1-UltraHome', 'C1-UltraHome', 'Stance Type : Normal'),
 		   ('C1-HeavyAway', 'C1-HeavyAway', 'Stance Type : Normal'),
 		   ('C1-HardcoreAway', 'C1-HardcoreAway', 'Stance Type : Normal'),
 		   ('C1-UltraAway', 'C1-UltraAway', 'Stance Type : Normal'),
-		   ('C2-UltraHome', 'C2-UltraHome', 'Stance Type : Standing'),
-		   ('C2-HardcoreHome', 'C2-HardcoreHome', 'Stance Type : Standing'),
-		   ('C2-HeavyHome', 'C2-HeavyHome', 'Stance Type : Standing'),
-		   ('C2-PopHome', 'C2-PopHome', 'Stance Type : Standing'),
-		   ('C2-FolkHome', 'C2-FolkHome', 'Stance Type : Standing'),
-		   ('C2-Neutral', 'C2-Neutral', 'Stance Type : Standing'),
-		   ('C2-FolkAway', 'C2-FolkAway', 'Stance Type : Standing'),
-		   ('C2-PopAway', 'C2-PopAway', 'Stance Type : Standing'),
-		   ('C2-HeavyAway', 'C2-HeavyAway', 'Stance Type : Standing'),
-		   ('C2-HardcoreAway', 'C2-HardcoreAway', 'Stance Type : Standing'),
-		   ('C2-UltraAway', 'C2-UltraAway', 'Stance Type : Standing')
 ]
-
+behavior1=[('C2-UltraHome', 'C2-UltraHome', 'Stance Type : Standing Non-chair'),
+		   ('C2-HardcoreHome', 'C2-HardcoreHome', 'Stance Type : Standing Non-chair'),
+		   ('C2-HeavyHome', 'C2-HeavyHome', 'Stance Type : Standing Non-chair'),
+		   ('C2-PopHome', 'C2-PopHome', 'Stance Type : Standing Non-chair'),
+		   ('C2-FolkHome', 'C2-FolkHome', 'Stance Type : Standing Non-chair'),
+		   ('C2-Neutral', 'C2-Neutral', 'Stance Type : Standing Non-chair'),
+		   ('C2-FolkAway', 'C2-FolkAway', 'Stance Type : Standing Non-chair'),
+		   ('C2-PopAway', 'C2-PopAway', 'Stance Type : Standing Non-chair'),
+		   ('C2-HeavyAway', 'C2-HeavyAway', 'Stance Type : Standing Non-chair'),
+		   ('C2-HardcoreAway', 'C2-HardcoreAway', 'Stance Type : Standing Non-chair'),
+		   ('C2-UltraAway', 'C2-UltraAway', 'Stance Type : Standing Non-chair'),
+]
+behavior2=[('C3-UltraHome', 'C3-UltraHome', 'Stance Type : Standing with Chair'),
+		   ('C3-HardcoreHome', 'C3-HardcoreHome', 'Stance Type : Standing with Chair'),
+		   ('C3-HeavyHome', 'C3-HeavyHome', 'Stance Type : Standing with Chair'),
+		   ('C3-PopHome', 'C3-PopHome', 'Stance Type : Standing with Chair'),
+		   ('C3-FolkHome', 'C3-FolkHome', 'Stance Type : Standing with Chair'),
+		   ('C3-Neutral', 'C3-Neutral', 'Stance Type : Standing with Chair'),
+		   ('C3-FolkAway', 'C3-FolkAway', 'Stance Type : Standing with Chair'),
+		   ('C3-PopAway', 'C3-PopAway', 'Stance Type : Standing with Chair'),
+		   ('C3-HeavyAway', 'C3-HeavyAway', 'Stance Type : Standing with Chair'),
+		   ('C3-HardcoreAway', 'C3-HardcoreAway', 'Stance Type : Standing with Chair'),
+		   ('C3-UltraAway', 'C3-UltraAway', 'Stance Type : Standing with Chair')
+]
 parentlist, shaders=[],[]
 
 L_Side=["back","front","left","right"
@@ -542,7 +552,7 @@ def Create_Parent_Part(self, context):
 			elif ob.name in ["cheer_back1_h_a2","cheer_front1_h_a2", "cheer_left1_h_a2", "cheer_right1_h_a2"]:
 				ob.parent = bpy.data.objects["CHEER2"]
 			elif ob.name in ["Staff Coach","Steward", "Staff Walk","Ballboy","Cameraman Crew","Staff Common"]:
-				ob.parent = bpy.data.objects["STAFF"]			
+				ob.parent = bpy.data.objects["STAFF"]				
 			elif ob.name == "MESH_FLAGAREA":
 				ob.parent = bpy.data.objects["FLAGAREA"]
 			elif ob.name == "MESH_CROWD":
@@ -593,7 +603,6 @@ def checkStadiumID(context, isParent):
 						for nodes in blenderMaterial.node_tree.nodes:
 							if nodes.type == "TEX_IMAGE":
 								blenderTexture = blenderMaterial.node_tree.nodes[nodes.name].fmdl_texture_directory
-								print(blenderTexture)
 								if "st" in blenderTexture:
 									if not context.scene.STID in blenderTexture:
 										print("\nStadium ID isn't match!!")
@@ -712,20 +721,21 @@ class FMDL_21_PT_Material_Panel(bpy.types.Panel):
 
 	def draw(self, context):
 		material = context.material
-		layout = self.layout
-		mainColumn = layout.column(align=True)
-		box = layout.box()
-		mainColumn = box.row(align=0)
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		mainColumn.prop(material, "fox_shader", text="PES Fox Shader")
 		mainColumn.operator("shader.operator", text="", icon="SEQ_SEQUENCER")
-		mainColumn = box.row(align=0)
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		mainColumn.prop(material, "fmdl_material_shader")
-		mainColumn = box.row(align=0)
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		mainColumn.prop(material, "fmdl_material_technique")
-		mainColumn = box.row(align=0)
-		mainColumn.separator()
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		mainColumn.label(text="Material Parameters")
-		mainColumn = box.row(align=0)
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		parameterListRow = mainColumn.row()
 		parameterListRow.template_list(
 			FMDL_UL_material_parameter_list.__name__,
@@ -742,7 +752,8 @@ class FMDL_21_PT_Material_Panel(bpy.types.Panel):
 		listButtonColumn.separator()
 		listButtonColumn.operator("fmdl.material_parameter_moveup", icon='TRIA_UP', text="")
 		listButtonColumn.operator("fmdl.material_parameter_movedown", icon='TRIA_DOWN', text="")
-		mainColumn = box.row(align=0)
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
 		if 0 <= material.fmdl_material_parameter_active < len(material.fmdl_material_parameters):
 			valuesColumn = mainColumn.column()
 			parameter = material.fmdl_material_parameter_active
@@ -886,7 +897,7 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 			row.operator("main_parts.operator", text="Create Main Parts", icon="EMPTY_DATA")
 			row.operator("scene.operator", text="", icon="PRESET_NEW")
 			if ob and ob is not None:
-				blenderMaterial = bpy.context.active_object.active_material
+				blenderMaterial = context.active_object.active_material
 				if ob.name == "MAIN":
 					row = layout.row()
 					box = layout.box()
@@ -984,7 +995,7 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 					row.prop(scn, "useFastConvertTexture", text=txt)
 					row.operator("clear_temp.operator", text="", icon="TRASH").opname = "cleartempdata"
 					row = box.row()
-					row.operator("export_stadium.operator", text="Export Main Stadium", icon="EXPORT")
+					row.operator("export_stadium.operator", text="Export Main Stadium", icon="EXPORT").opname = "mainstadium"
 				elif scn.part_info == "AUDIAREA":
 					if ob is not None:
 						if ob.name == "AUDIAREA":
@@ -1173,12 +1184,45 @@ class FMDL_21_PT_UIPanel(bpy.types.Panel):
 						row = box.row()
 						row.label(text="Ballboy Position", icon="INFO")
 						row = box.row()
-						row.label(text="Work in progress", icon="ERROR")
+						row.operator("staff_pos.operator", text="Load Ballboy", icon="IMPORT").opname = "loadballboy"
+						row.operator("staff_pos.operator", text="Assign Ballboy", icon="EXPORT").opname = "assignballboy"
 						row = box.row()
-						row.enabled=0
-						row.operator("staff_pos.operator", text="Import", icon="IMPORT").opname = "loadballboy"
-						row.operator("staff_pos.operator", text="Export", icon="EXPORT").opname = "assignballboy"
-						row = box.row()
+					else:
+						if ob is not None and ob.parent is not None:
+							if ob.parent.name == "Ballboy" and ob.type == "EMPTY":
+								box = layout.box()
+								row = box.row()
+								row.label(text="Ballboy Position", icon="INFO")
+								row = box.row()
+								row = box.row()
+								row = box.row()
+								row.prop(ob,"scrName")
+								row = box.row()
+								row.prop(ob,"scrEntityPtr")
+								row = box.row()
+								row.prop(ob,"scrTransformEntity")
+								row = box.row()
+								row = box.row()
+								row.prop(ob,"scrLimitedRotatable")
+								if ob.scrLimitedRotatable:
+									row = box.row()
+									row.prop(ob,"ObjectLinksName")
+									row = box.row()
+									row.prop(ob,"EntityObjectLinks")
+									row = box.row()
+									row.prop(ob,"packagePathHash")
+									row = box.row()
+									row.prop(ob,"maxRotDegreeLeft")
+									row.prop(ob,"maxRotDegreeRight")
+									row = box.row()
+									row.prop(ob,"maxRotSpeedLeft")
+									row.prop(ob,"maxRotSpeedRight")
+									row = box.row()
+								row = box.row()
+								row.prop(ob,"scrDirection")
+								row.prop(ob,"scrKind")
+								row.prop(ob,"scrDemoGroup")	
+								row = box.row()
 					if ob.name =="Cameraman Crew":
 						box = layout.box()
 						row = box.row()
@@ -1533,6 +1577,7 @@ class Stadium_Banner(bpy.types.Operator):
 			dirRemove="%scheer\\#Win\\cheer_%s_h_a1_fpk"% (exportPath,stid)
 			fileRemove="%scheer\\#Win\\cheer_%s_h_a1.fpk.xml"% (exportPath,stid)
 
+			
 			if context.scene.fmdl_import_load_textures:	
 				for texname in ["banner_dumy_bsm.ftex","banner_lbm.ftex","banner_lym.ftex","banner_nrm.ftex",
 								"banner_srm.ftex","banner2_dumy_bsm.ftex","banner2_lym.ftex","banner2_nrm.ftex"]:
@@ -1834,7 +1879,7 @@ class Staff_Coach_Pos(bpy.types.Operator):
 								self.report({"WARNING"}, "Staff Walk already loaded !!")
 								return {'CANCELLED'}
 
-			self.report({"INFO"}, "Importing Staff Walk succesfully...")
+			self.report({"INFO"}, "Load Staff Walk succesfully...")
 			PesStaff.importStaffWalk(self, context)
 			remove_dir("{0}staff\\#Win\\staff_{1}_fpk".format(scn.export_path,stid))
 			remove_file("{0}staff\\#Win\\staff_{1}.fpk.xml".format(scn.export_path,stid))
@@ -1851,8 +1896,29 @@ class Staff_Coach_Pos(bpy.types.Operator):
 			remove_dir("{0}staff\\#Win\\staff_{1}_fpkd".format(scn.export_path,stid))
 			remove_file("{0}staff\\#Win\\staff_{1}.fpkd.xml".format(scn.export_path,stid))
 			return {'FINISHED'}
-	pass
 
+
+		if self.opname == "loadballboy":
+			try:
+				PesStaff.importBallboy(self, context)
+				self.report({"INFO"}, "Load Ballboy succesfully...")
+			except Exception as e:
+				self.report({"WARNING"}, format(e))
+			remove_dir("{0}staff\\#Win\\staff_{1}_fpk".format(scn.export_path,stid))
+			remove_file("{0}staff\\#Win\\staff_{1}.fpk.xml".format(scn.export_path,stid))
+			remove_dir("{0}staff\\#Win\\staff_{1}_fpkd".format(scn.export_path,stid))
+			remove_file("{0}staff\\#Win\\staff_{1}.fpkd.xml".format(scn.export_path,stid))
+			return {'FINISHED'}
+		if self.opname == "assignballboy":
+			try:
+				PesStaff.Ballboy_Assign(self,context)
+				self.report({"INFO"}, "Assign Ballboy succesfully...")
+			except Exception as e:
+				self.report({"WARNING"}, format(e))
+			remove_dir("{0}staff\\#Win\\staff_{1}_fpkd".format(scn.export_path,stid))
+			remove_file("{0}staff\\#Win\\staff_{1}.fpkd.xml".format(scn.export_path,stid))
+			return {'FINISHED'}
+	pass
 
 class New_STID(bpy.types.Operator):
 	"""Swap old ID to new ID"""
@@ -1985,7 +2051,7 @@ class Light_FX(bpy.types.Operator):
 	
 	def execute(self, context):
 		stid = context.scene.STID
-		x=0
+		x=int()
 		if self.opname == "set_lfx_side":
 			side_refresh = r_side(context)
 			if side_refresh:
@@ -2008,7 +2074,6 @@ class Light_FX(bpy.types.Operator):
 			scn = bpy.context.scene
 			sideName,LSide=[],[]
 			
-
 			if len(stid) == 5:
 				if context.scene.export_path == str():
 					self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
@@ -2080,7 +2145,6 @@ class Light_FX(bpy.types.Operator):
 									return {'CANCELLED'}
 				
 				makedir("effect\\#Win\\effect_{0}_{1}_fpk\\Assets\\pes16\\model\\bg\\{2}\\effect\\locator".format(scn.STID,scn.time_mode,scn.STID), True)
-				fpkPath="{0}effect\\#Win\\effect_{1}_{2}.fpk".format(scn.export_path, scn.STID,scn.time_mode)
 				xmlPath="{0}effect\\#Win\\effect_{1}_{2}.fpk.xml".format(scn.export_path, scn.STID,scn.time_mode)
 				xmlConfigPath= "{0}effect\\#Win\\effect_{1}_{2}_fpk\\effect_config.xml".format(scn.export_path, scn.STID,scn.time_mode)
 				
@@ -2379,7 +2443,7 @@ def Crowd_Import(filename, c_par):
 						uvmap.append(uvs)
 					faces.append(face)
 
-					# get audiarea type normal
+					# get audiarea type standing normal
 					if crowd_type <= 1.0 and crowd_type >= 0.90:
 						c_typeVlist.append((crowd_typedict[0], face))
 					elif crowd_type <= 0.90 and crowd_type >= 0.86:
@@ -2402,7 +2466,7 @@ def Crowd_Import(filename, c_par):
 						c_typeVlist.append((crowd_typedict[9], face))
 					elif c_type <= 0.10 and crowd_type >= 0.00:
 						c_typeVlist.append((crowd_typedict[10], face))
-					# get audiarea type standing
+					# get audiarea type standing non-chair
 					elif crowd_type <= 3.0 and crowd_type >= 2.90:
 						c_typeVlist.append((crowd_typedict[11], face))
 					elif crowd_type <= 2.90 and crowd_type >= 2.86:
@@ -2425,9 +2489,32 @@ def Crowd_Import(filename, c_par):
 						c_typeVlist.append((crowd_typedict[20], face))
 					elif c_type <= 2.10 and crowd_type >= 2.00:
 						c_typeVlist.append((crowd_typedict[21], face))
+					# get audiarea type standing with chair
+					elif crowd_type <= 5.0 and crowd_type >= 4.90:
+						c_typeVlist.append((crowd_typedict[22], face))
+					elif crowd_type <= 4.90 and crowd_type >= 4.86:
+						c_typeVlist.append((crowd_typedict[23], face))
+					elif c_type <= 4.86 and crowd_type >= 4.80:
+						c_typeVlist.append((crowd_typedict[24], face))
+					elif c_type <= 4.80 and crowd_type >= 4.70:
+						c_typeVlist.append((crowd_typedict[25], face))
+					elif c_type <= 4.70 and crowd_type >= 4.60:
+						c_typeVlist.append((crowd_typedict[26], face))
+					elif c_type <= 4.60 and crowd_type >= 4.50:
+						c_typeVlist.append((crowd_typedict[27], face))
+					elif c_type <= 4.50 and crowd_type >= 4.40:
+						c_typeVlist.append((crowd_typedict[28], face))
+					elif c_type <= 4.40 and crowd_type >= 4.30:
+						c_typeVlist.append((crowd_typedict[29], face))
+					elif c_type <= 4.30 and crowd_type >= 4.20:
+						c_typeVlist.append((crowd_typedict[30], face))
+					elif c_type <= 4.20 and crowd_type >= 4.10:
+						c_typeVlist.append((crowd_typedict[31], face))
+					elif c_type <= 4.10 and crowd_type >= 4.00:
+						c_typeVlist.append((crowd_typedict[32], face))
 
 			print("\n")
-			print("*"*28)
+			print("***"*20)
 			print("Audiarea Side:",crowd_name)
 			mesh = bpy.data.meshes.new(crowd_name)
 			mesh.from_pydata(verts, [], faces)
@@ -2457,10 +2544,12 @@ def Crowd_Import(filename, c_par):
 					vg.new(name=crowd_type_name)
 					if "C1" in crowd_type_name:
 						print("Audiarea Type: %s -> Stance Type: Normal"%crowd_type_name)
+					elif "C2" in crowd_type_name:
+						print("Audiarea Type: %s -> Stance Type: Standing Non-chair"%crowd_type_name)
 					else:
-						print("Audiarea Type: %s -> Stance Type: Standing"%crowd_type_name)
+						print("Audiarea Type: %s -> Stance Type: Standing with Chair"%crowd_type_name)
 				vg[crowd_type_name].add(crowd_num_type[1], 1.0, 'ADD')
-			print("*"*28)
+			print("***"*20)
 				
 			# move objects to crowd parent
 			parent = bpy.data.objects.get(c_par)
@@ -2557,8 +2646,8 @@ class Import_Crowd_OT(bpy.types.Operator):
 	pass
 
 def Crowd_Export(outpath, partList, obj_part):
-
 	scn = bpy.context.scene
+
 	if bpy.ops.object.mode_set():
 		bpy.ops.object.mode_set(mode='OBJECT')
 	bpy.ops.object.select_all(action='DESELECT')
@@ -2567,7 +2656,7 @@ def Crowd_Export(outpath, partList, obj_part):
 			ob.select_set(True)
 	bpy.ops.object.transform_apply(location=1,rotation=1,scale=1)
 	bpy.ops.object.select_all(action='DESELECT')
-	
+
 	def crowd(obj):
 		print("\n")
 		print("***"*20)
@@ -2647,7 +2736,7 @@ def Crowd_Export(outpath, partList, obj_part):
 				audifile.write(pack("3f",w[0][0],w[0][2],w[0][1]*-1))
 			for m in vlist:
 				audifile.write(pack("2f",m[1],m[2]))
-
+		
 	outpath_crowd_data = outpath
 	audifile=open(outpath_crowd_data,"wb")
 	audifile.write(pack("2I48s",1,1,"".encode()))
@@ -2661,8 +2750,10 @@ def Crowd_Export(outpath, partList, obj_part):
 			for stance in stancelist:
 				if "C1" in stance:
 					print("Audiarea Type: %s -> Stance Type: Normal"%stance)
-				else:
+				elif "C2" in stance:
 					print("Audiarea Type: %s -> Stance Type: Standing Non-chair"%stance)
+				else:
+					print("Audiarea Type: %s -> Stance Type: Standing with Chair"%stance)
 			stancelist.clear()
 			print("***"*20)
 		else:
@@ -2836,8 +2927,16 @@ class PES_21_PT_CrowdSection(bpy.types.Panel):
 		mainColumn = self.layout.column()
 		mainColumn.label(text='Crowd Assignment', icon='GROUP_VERTEX')
 		mainColumn=mainColumn.row()
-		mainColumn.prop(scn, 'crowd_type_enum')
-		mainColumn.operator("assign.operator", icon='PLUS')
+		mainColumn.prop(scn, 'crowd_type_enum0')
+		mainColumn.operator("assign.operator", icon='PLUS').opname = "stance0"
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.prop(scn, 'crowd_type_enum1')
+		mainColumn.operator("assign.operator", icon='PLUS').opname = "stance1"
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.prop(scn, 'crowd_type_enum2')
+		mainColumn.operator("assign.operator", icon='PLUS').opname = "stance2"
 	pass
 		
 
@@ -2845,12 +2944,24 @@ class PES_21_OT_assign_crowd_type(bpy.types.Operator):
 	"""Click to assign selected vertices to the selected crowd type"""
 	bl_idname = "assign.operator"
 	bl_label = str()
+	opname : StringProperty()
 
 	def execute(self, context):
-		try:
-			crowd_groups(context.scene.crowd_type_enum)
-		except ValueError as msg:
-			self.report({"WARNING"}, format(msg))
+		if self.opname == "stance0":
+			try:
+				crowd_groups(context.scene.crowd_type_enum0)
+			except ValueError as msg:
+				self.report({"WARNING"}, format(msg))
+		if self.opname == "stance1":
+			try:
+				crowd_groups(context.scene.crowd_type_enum1)
+			except ValueError as msg:
+				self.report({"WARNING"}, format(msg))
+		if self.opname == "stance2":
+			try:
+				crowd_groups(context.scene.crowd_type_enum2)
+			except ValueError as msg:
+				self.report({"WARNING"}, format(msg))
 		return {'FINISHED'}
 	pass
 
@@ -2902,16 +3013,16 @@ def lightfximport(fname):
 		lamp_data_x = unpack('4f', lockstar.read(16))
 		lamp_data_y = unpack('4f', lockstar.read(16))
 		lamp_data_z = unpack('4f', lockstar.read(16))
-		Enegy=lamp_data_y[0]
-		if Enegy == 1.0:
-			Enegy=lamp_data_z[3]
+		Energy=lamp_data_y[0]
+		if Energy == 1.0:
+			Energy=lamp_data_z[3]
 		light_data = bpy.data.lights.new(name="L_Point", type='POINT')
 		light_data.energy = 10
 		light_object = bpy.data.objects.new(name="L_Point", object_data=light_data)
 		bpy.context.collection.objects.link(light_object)
 		bpy.context.view_layer.objects.active = light_object
 		light_object.location = (lamp_data_x[2],lamp_data_z[2]*-1,lamp_data_y[2])
-		light_object.l_Energy = Enegy
+		light_object.l_Energy = Energy
 		if 'back' in fname:
 			side='L_BACK'
 		if 'front' in fname:
@@ -2923,10 +3034,10 @@ def lightfximport(fname):
 		parent = bpy.data.objects.get(side)
 		child = bpy.data.objects.get(light_data.name)
 		child.parent = parent
-		# print("Light name: (%s)"%light_data.name,"Energy: (%s)"%Enegy)
+		print(f"Light name: {light_data.name}, Location: {lamp_data_x[2],lamp_data_z[2]*-1,lamp_data_y[2]}, Energy: {Energy}")
 
 def effect_config(filename):
-	domData =  parse(filename)
+	domData =  minidom.parse(filename)
 	light_object=object
 	light_data=object
 	side=str()
@@ -3128,6 +3239,7 @@ class Export_OT(bpy.types.Operator):
 	"""Export Stadium"""
 	bl_idname = "export_stadium.operator"
 	bl_label = str()
+	opname : StringProperty()
 
 	@classmethod
 	def poll(cls, context):
@@ -3163,81 +3275,85 @@ class Export_OT(bpy.types.Operator):
 		if checks:
 			self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
 			return {'CANCELLED'}
-		files,files2=[],[]
-		for en in PesEnlighten.EnlightenAsset:
-			en=en.replace("stid",stid)
-			files2.append(en)
-		shearTransformlist,pivotTransformlist,dataList=[],[],[]
-		Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir=[],[],[],[]
-		arraySize=0
-		print('\nStarting export object as .FMDL')
-		assetDirname = "/Assets/pes16/model/bg/%s/scenes/" % stid
-		assetDir = "{0}#Win\\{1}_fpk\\Assets\\pes16\\model\\bg\\{2}\\scenes\\".format(exportPath,stid,stid)
 		checksscale=checkNegativeScale(self,context)
 		if checksscale:
 			self.report({"WARNING"}, "Negative scale is unsupported, more info see => System Console (^_^)")
 			return {'CANCELLED'}
-		for child in bpy.data.objects[context.scene.part_info].children:
-			if child.type == 'EMPTY' and child is not None:
-				for ob in bpy.data.objects[child.name].children[:1]:
-					if ob is not None:
-						for ob2 in bpy.data.objects[ob.name].children[:1]:
-							if ob2 is not None:
-								print('\n********************************')
-								arraySize +=1
-								makedir("#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
-								makedir("#Win\\{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}".format(stid,stid),True)
-								objName = child.name
-								fmdlName = child.name
-								try:
-									addr=hxd(transformlist[datalist.index(fmdlName)],8)
-									shearTransformaddr=hxd(shearTransform[datalist.index(fmdlName)],8)
-									pivotTransformaddr=hxd(pivotTransform[datalist.index(fmdlName)],8)
-									Transformaddr=hxd(TransformEntity[datalist.index(fmdlName)],8)
-									Stadium_Model.append(StadiumModel[datalist.index(fmdlName)])
-									Stadium_Kinds.append(StadiumKind[datalist.index(fmdlName)])
-									Stadium_Dir.append(StadiumDir[datalist.index(fmdlName)])
-								except Exception as msg:
-									self.report({"WARNING"}, format(msg) + " more info see => System Console (^_^)")
-									print("\n\nInfo: Need to delete "+format(msg))
-									print("\n\nInfo: Make sure mesh object in correct parent set your mesh object to parent list: %s" % datalist)
-									return {'CANCELLED'}
-								fileName = assetDir + fmdlName+".fmdl"
-								meshID = str(fileName).split('..')[0].split('\\')[-1:][0]									
-								print('Exporting ==> %s' % meshID)
-								print('********************************')
-								files.append(assetDirname +fmdlName+".fmdl")
-								files2.append(assetDirname +fmdlName+".fmdl")
-								dataList.append(addr)
-								shearTransformlist.append(shearTransformaddr)
-								pivotTransformlist.append(pivotTransformaddr)
-								TransformEntityList.append(Transformaddr)
-								export_fmdl(self, context, fileName, meshID, objName)
-		makeXML(exportPath+ "#Win\\"+stid+".fpk.xml", files2, "%s.fpk"%stid,"Fpk","FpkFile", True)
-		makeXML(exportPath+ "#Win\\"+stid+".fpkd.xml", "/Assets/pes16/model/bg/{0}/{1}_modelset.fox2".format(stid,stid), "%s.fpkd"%stid,"Fpkd","FpkFile", False)
-		fox2XmlPath="{0}#Win\\{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\{3}_modelset.fox2.xml".format(exportPath,stid,stid,stid)
-		try:
-			PesFoxXML.makeXMLForStadium(fox2XmlPath, dataList, arraySize, files, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir)
-			compileXML(fox2XmlPath)
-		except Exception as msg:
-			self.report({"INFO"}, format(msg))
-			return {'CANCELLED'}
-		#Create Enlighten System
-		EnlightenPathOut="#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\EnlightenOutput".format(stid,stid)
-		makedir(EnlightenPathOut,True)
-		for filenames in os.walk(EnlightenPath):
-			for fname in filenames[2]:
-				oldName=str(fname)
-				newName=oldName.replace("stid",stid)
-				shutil.copyfile(EnlightenPath+oldName,exportPath+EnlightenPathOut+"\\"+newName)
-		pack_unpack_Fpk("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
-		remove_dir("{0}#Win\\{1}_fpk".format(exportPath,stid))
-		remove_file("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
-		pack_unpack_Fpk("{0}#Win\\{1}.fpkd.xml".format(exportPath,stid))
-		remove_dir("{0}#Win\\{1}_fpkd".format(exportPath,stid))
-		remove_file("{0}#Win\\{1}.fpkd.xml".format(exportPath,stid))
-		self.report({"INFO"}, "Exporting stadium succesfully...!")
-		return {'FINISHED'}
+		if self.opname == "mainstadium":
+			files,files2=[],[]
+			for en in PesEnlighten.EnlightenAsset:
+				en=en.replace("stid",stid)
+				files2.append(en)
+			shearTransformlist,pivotTransformlist,dataList=[],[],[]
+			Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir=[],[],[],[]
+			arraySize=0
+			print('\nStarting export object as .FMDL')
+			assetDirname = "/Assets/pes16/model/bg/%s/scenes/" % stid
+			assetDir = "{0}#Win\\{1}_fpk\\Assets\\pes16\\model\\bg\\{2}\\scenes\\".format(exportPath,stid,stid)
+
+			for child in bpy.data.objects[context.scene.part_info].children:
+				if child.type == 'EMPTY' and child is not None:
+					for ob in bpy.data.objects[child.name].children[:1]:
+						if ob is not None:
+							for ob2 in bpy.data.objects[ob.name].children[:1]:
+								if ob2 is not None:
+									print('\n********************************')
+									arraySize +=1
+									makedir("#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\scenes".format(stid,stid),True)
+									makedir("#Win\\{0}_fpkd\\Assets\\pes16\\model\\bg\\{1}".format(stid,stid),True)
+									objName = child.name
+									fmdlName = child.name
+									try:
+										addr=hxd(transformlist[datalist.index(fmdlName)],8)
+										shearTransformaddr=hxd(shearTransform[datalist.index(fmdlName)],8)
+										pivotTransformaddr=hxd(pivotTransform[datalist.index(fmdlName)],8)
+										Transformaddr=hxd(TransformEntity[datalist.index(fmdlName)],8)
+										Stadium_Model.append(StadiumModel[datalist.index(fmdlName)])
+										Stadium_Kinds.append(StadiumKind[datalist.index(fmdlName)])
+										Stadium_Dir.append(StadiumDir[datalist.index(fmdlName)])
+									except Exception as msg:
+										self.report({"WARNING"}, format(msg) + " more info see => System Console (^_^)")
+										print("\n\nInfo: Need to delete "+format(msg))
+										print("\n\nInfo: Make sure mesh object in correct parent set your mesh object to parent list: %s" % datalist)
+										return {'CANCELLED'}
+									fileName = assetDir + fmdlName+".fmdl"
+									meshID = str(fileName).split('..')[0].split('\\')[-1:][0]									
+									print('Exporting ==> %s' % meshID)
+									print('********************************')
+									files.append(assetDirname +fmdlName+".fmdl")
+									files2.append(assetDirname +fmdlName+".fmdl")
+									dataList.append(addr)
+									shearTransformlist.append(shearTransformaddr)
+									pivotTransformlist.append(pivotTransformaddr)
+									TransformEntityList.append(Transformaddr)
+									export_fmdl(self, context, fileName, meshID, objName)
+			makeXML(exportPath+ "#Win\\"+stid+".fpk.xml", files2, "%s.fpk"%stid,"Fpk","FpkFile", True)
+			makeXML(exportPath+ "#Win\\"+stid+".fpkd.xml", "/Assets/pes16/model/bg/{0}/{1}_modelset.fox2".format(stid,stid), "%s.fpkd"%stid,"Fpkd","FpkFile", False)
+			fox2XmlPath="{0}#Win\\{1}_fpkd\\Assets\\pes16\\model\\bg\\{2}\\{3}_modelset.fox2.xml".format(exportPath,stid,stid,stid)
+			try:
+				PesFoxXML.makeXMLForStadium(fox2XmlPath, dataList, arraySize, files, shearTransformlist, pivotTransformlist, Stadium_Model,TransformEntityList,Stadium_Kinds,Stadium_Dir)
+				compileXML(fox2XmlPath)
+			except Exception as msg:
+				self.report({"INFO"}, format(msg))
+				return {'CANCELLED'}
+			#Create Enlighten System
+			EnlightenPathOut="#Win\\{0}_fpk\\Assets\\pes16\\model\\bg\\{1}\\EnlightenOutput".format(stid,stid)
+			makedir(EnlightenPathOut,True)
+			for filenames in os.walk(EnlightenPath):
+				for fname in filenames[2]:
+					oldName=str(fname)
+					newName=oldName.replace("stid",stid)
+					shutil.copyfile(EnlightenPath+oldName,exportPath+EnlightenPathOut+"\\"+newName)
+			pack_unpack_Fpk("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
+			remove_dir("{0}#Win\\{1}_fpk".format(exportPath,stid))
+			remove_file("{0}#Win\\{1}.fpk.xml".format(exportPath,stid))
+			pack_unpack_Fpk("{0}#Win\\{1}.fpkd.xml".format(exportPath,stid))
+			remove_dir("{0}#Win\\{1}_fpkd".format(exportPath,stid))
+			remove_file("{0}#Win\\{1}.fpkd.xml".format(exportPath,stid))
+			self.report({"INFO"}, "Exporting stadium succesfully...!")
+			return {'FINISHED'}
+		if self.opname == "extrastadium":
+			return {'FINISHED'}
 	pass
 
 class Pitch_Objects(bpy.types.Operator):
@@ -3253,6 +3369,9 @@ class Pitch_Objects(bpy.types.Operator):
 	def execute(self, context):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
+
+		if checkMeshMaterialUvs(self, context):
+			return {'CANCELLED'}
 
 		if len(stid) == 5:
 			if context.scene.export_path == str():
@@ -3300,10 +3419,6 @@ class Pitch_Objects(bpy.types.Operator):
 			self.report({"INFO"}, "Load Pitch succesfully...!")
 			return {'FINISHED'}
 		if self.opname == "pitch_export":
-
-			if checkMeshMaterialUvs(self, context):
-				return {'CANCELLED'}
-
 			checks=checkStadiumID(context, True)
 			if checks:
 				self.report({"WARNING"}, "Stadium ID isn't match, more info see => System Console (^_^)")
@@ -3359,10 +3474,10 @@ class ExportStadium_AD(bpy.types.Operator):
 	def execute(self, context):
 		stid=context.scene.STID
 		exportPath=context.scene.export_path
-
+		
 		if checkMeshMaterialUvs(self, context):
 			return {'CANCELLED'}
-			
+
 		if len(stid) == 5:
 			if context.scene.export_path == str():
 				self.report({"WARNING"}, "Choose path to export %s e:g [-->Asset\\model\\bg\\%s<--]!!" % (context.scene.part_info,stid))
@@ -3720,7 +3835,7 @@ class Convert_OT(bpy.types.Operator):
 											print (f"Texture Dimensions:({width} x {height})")
 											if width > 7680 or height > 7680:
 												self.report({"WARNING"}, "Error when converting, texture dimensions out of range, check in Blender Console => Window -> Toggle System Console !!")
-												print("\nTexture dimensions out of range")
+												print("\nTexture dimensions out of range, maximum texture dimension is 7680 (8K)?")
 												print (f"Check out texture in -> Texture Filename: ({filenames + extension}), Texture Dimensions: ({width} x {height})")
 												return {'CANCELLED'}
 											if not str(width) in TexDimensions or not str(height) in TexDimensions:
@@ -3905,20 +4020,21 @@ class FMDL_21_PT_Texture_Panel(bpy.types.Panel, bpy.types.AnyType):
 
 	def draw(self, context):
 		node = context.active_node
-		row = self.layout.row()
-		box = self.layout.box()
-		box.alignment = 'CENTER'
-		row = box.row(align=0)
-		row.label(text="Image File")
-		row.operator(FMDL_Scene_Open_Image.bl_idname, icon="FILE_FOLDER")
-		row.operator("edit.operator", text="", icon="FILE_IMAGE")
-		row.operator("reload.operator", text="", icon="FILE_REFRESH")
-		row = box.row(align=0)
-		row.prop(node, "fmdl_texture_role", text="Role")
-		row = box.row(align=0)
-		row.prop(node, "fmdl_texture_filename", text="Filename")
-		row = box.row(align=0)
-		row.prop(node, "fmdl_texture_directory", text="Directory")
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.label(text="Image File")
+		mainColumn.operator(FMDL_Scene_Open_Image.bl_idname, icon="FILE_FOLDER")
+		mainColumn.operator("edit.operator", text="", icon="FILE_IMAGE")
+		mainColumn.operator("reload.operator", text="", icon="FILE_REFRESH")
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.prop(node, "fmdl_texture_role", text="Role")
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.prop(node, "fmdl_texture_filename", text="Filename")
+		mainColumn = self.layout.column()
+		mainColumn=mainColumn.row()
+		mainColumn.prop(node, "fmdl_texture_directory", text="Directory")
 
 class FMDL_Scene_Open_Image(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""Open a Image Texture DDS / PNG / TGA"""
@@ -4108,7 +4224,7 @@ def register():
 	for c in classes:
 		bpy.utils.register_class(c)
 
-	domData = parse(xml_dir+"PesFoxShader.xml")
+	domData = minidom.parse(xml_dir+"PesFoxShader.xml")
 	shaders = [(shader.getAttribute("shader"), shader.getAttribute("technique"), "Shader Type: "+shader.getAttribute("shader")) 
 					for shader in domData.getElementsByTagName("FoxShader") if shader.getAttribute("technique")]
 	shaders.sort(reverse=0)
@@ -4148,7 +4264,9 @@ def register():
 	bpy.types.Scene.part_info = EnumProperty(name="Part List", items=part_export)
 	bpy.types.Scene.STID = StringProperty(name="ID", default="st081")
 
-	bpy.types.Scene.crowd_type_enum = EnumProperty(items=behavior,name='Type')
+	bpy.types.Scene.crowd_type_enum0 = EnumProperty(items=behavior0,name='Type C1')
+	bpy.types.Scene.crowd_type_enum1 = EnumProperty(items=behavior1,name='Type C2')
+	bpy.types.Scene.crowd_type_enum2 = EnumProperty(items=behavior2,name='Type C3')
 	
 	bpy.types.Scene.tvobject = EnumProperty(name="TV",items=[("tv_large_c","tv_large_c","tv_large_c"),
 															("tv_small_c","tv_small_c","tv_small_c")])

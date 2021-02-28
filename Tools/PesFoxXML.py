@@ -431,6 +431,116 @@ def scrMakeXml(filename,isize,lstTotal,lstTotal2,lstTotal3):
 		file.flush(),file.close()
 	return 1
 
+ballboy_class="""<?xml version="1.0" encoding="utf-8"?>
+<fox formatVersion="2" fileVersion="0" originalVersion="Fri Feb 05 20:33:05 UTC+07:00 2021">
+	<classes>
+		<class name="Entity" super="" version="2" />
+		<class name="Data" super="Entity" version="2" />
+		<class name="DataSet" super="" version="0" />
+		<class name="StadiumAnime" super="" version="3" />
+		<class name="StadiumModel" super="" version="3" />
+		<class name="TransformEntity" super="" version="0" />
+		<class name="LimitedRotatableObjectLinks" super="" version="0" />
+	</classes>
+	<entities>
+		<entity class="DataSet" classVersion="0" addr="0x00000100" unknown1="296" unknown2="0">
+			<staticProperties>
+				<property name="name" type="String" container="StaticArray" arraySize="1">
+					<value hash="0xB8A0BF169F98" />
+				</property>
+				<property name="dataSet" type="EntityHandle" container="StaticArray" arraySize="1">
+					<value>0x00000000</value>
+				</property>"""
+ballboy_entity_close="""
+				</property>
+			</staticProperties>
+			<dynamicProperties />
+		</entity>"""
+
+def Ballboy_xml(filename,isize,lstTotal,lstTotal2,lstTotal3):
+	stid=bpy.context.scene.STID
+	isize+=5
+	lstObject,lstObject2,lstObject3=[],[],[]
+	idx,idx2=0,0
+	with open(filename, "w", encoding="utf-8") as file:
+		file.write(ballboy_class)
+		file.write('\n\t\t\t\t<property name="dataList" type="EntityPtr" container="StringMap" arraySize="%i">'%isize)
+		file.write('\n\t\t\t\t\t<value key="anm_idole_sit_ballboy_A">0x00000200</value>')
+		file.write('\n\t\t\t\t\t<value key="anm_idole_sit_ballboy_B">0x00000F00</value>')
+		file.write('\n\t\t\t\t\t<value key="anm_idole_sitA">0x00001C00</value>')
+		file.write('\n\t\t\t\t\t<value key="anm_idole_sitB">0x00004100</value>')
+		
+		for ob in bpy.data.objects["Ballboy"].children:
+			if ob.type == "EMPTY":
+				keys=ob.name
+				if '.' in keys:
+					keys=str(ob.name).split('.')[0]
+				file.write('\n\t\t\t\t\t<value key="%s">%s</value>'%(ob.scrName,ob.scrEntityPtr))
+		file.write('\n\t\t\t\t\t<value key="LimitedRotatableObjectLinks_ballboy">0x00006300</value>')
+		file.write(ballboy_entity_close)
+		ballboy_anime=open(PES_Stadium_Exporter.xml_dir+'staff\\ballboy\\ballboy_anime.xml','rt').read()
+		file.write(ballboy_anime)
+		for ob in bpy.data.objects['Ballboy'].children:
+			if ob.type == "EMPTY":
+				lx,ly,lz=ob.location.x,ob.location.y*-1,ob.location.z
+				rw,rx,ry,rz=ob.rotation_quaternion.w,ob.rotation_quaternion.x,ob.rotation_quaternion.y*-1,ob.rotation_quaternion.z
+				obname = ob.name
+				if '.' in obname:
+					obname=str(obname).split('.')[0]
+				walkModel=open(PES_Stadium_Exporter.xml_dir+'staff\\walkModel.xml','rt').read()
+				walkModel=walkModel.replace('%obj','%s'%obname)
+				walkModel=walkModel.replace('%name','%s'%ob.scrName)
+				walkModel=walkModel.replace('%addr','%s'%ob.scrEntityPtr)
+				walkModel=walkModel.replace('%transform','%s'%ob.scrTransformEntity)
+				walkModel=walkModel.replace("%direction", str(ob.scrDirection))
+				walkModel=walkModel.replace("%kind", str(ob.scrKind))
+				walkModel=walkModel.replace("%demoGroup", str(ob.scrDemoGroup))
+
+				ob.rotation_mode = "QUATERNION"
+				walkModel=walkModel.replace("%qx", "%f"%rx)
+				walkModel=walkModel.replace("%qy", "%f"%rz)
+				walkModel=walkModel.replace("%qz", "%f"%ry)
+				walkModel=walkModel.replace("%qw", "%f"%rw)
+
+
+				walkModel=walkModel.replace("%tx", "%f"%lx)
+				walkModel=walkModel.replace("%ty", "%f"%lz)
+				walkModel=walkModel.replace("%tz", "%f"%ly)
+				file.write(walkModel)
+				for ob in bpy.data.objects["Ballboy"].children:
+					if ob.type == 'EMPTY' and ob is not None:
+						if ob.scrLimitedRotatable:
+							if not ob.ObjectLinksName in lstObject2:
+								lstObject2.append(ob.ObjectLinksName)
+								ObjectLinks=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\LimitedRotatableObjectLinks.xml','rt').read()
+								ObjectLinks=ObjectLinks.replace("%addr",ob.EntityObjectLinks)
+								ObjectLinks=ObjectLinks.replace("%name",ob.ObjectLinksName)
+								file.write(ObjectLinks)
+								tr=1
+							else:
+								tr=0
+							if ob.ObjectLinksName in lstObject2:
+								idx = lstTotal.count(ob.ObjectLinksName)
+							if tr==1:
+								file.write('\n\t\t\t\t<property name="links" type="EntityLink" container="StringMap" arraySize="%i">'%idx)
+							for ls in lstTotal2[:idx]:
+								if tr==1:
+									file.write('\n\t\t\t\t\t<value key="%s" packagePathHash="%s" archivePath="/Assets/pes16/model/bg/%s/staff/%s_2018_common_ste_sit.fox2" nameInArchive="%s">%s</value>'
+									%(lstTotal2[idx2],ob.packagePathHash,stid,stid,lstTotal2[idx2],lstTotal3[idx2]))	
+									idx2+=1
+							if not ob.ObjectLinksName in lstObject3:
+								lstObject3.append(ob.ObjectLinksName)
+								ObjectLinks2=open(PES_Stadium_Exporter.xml_dir+'scarecrow\\LimitedRotatableObjectLinks2.xml','rt').read()
+								ObjectLinks2=ObjectLinks2.replace("%maxRotDegreeLeft","%i"%ob.maxRotDegreeLeft)
+								ObjectLinks2=ObjectLinks2.replace("%maxRotDegreeRight","%i"%ob.maxRotDegreeRight)
+								ObjectLinks2=ObjectLinks2.replace("%maxRotSpeedLeft","%i"%ob.maxRotSpeedLeft)
+								ObjectLinks2=ObjectLinks2.replace("%maxRotSpeedRight","%i"%ob.maxRotSpeedRight)
+								file.write(ObjectLinks2)
+		for fr in foxroot:
+			file.write(fr)
+		file.flush(),file.close()
+	return 1
+
 foxClass='''<?xml version="1.0" encoding="utf-8"?>
 <fox formatVersion="2" fileVersion="0" originalVersion="Thu Jan 28 19:13:40 UTC+07:00 2021">
   <classes>

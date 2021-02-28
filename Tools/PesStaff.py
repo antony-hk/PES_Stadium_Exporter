@@ -11,6 +11,25 @@ staff_walk_list = ['gu_england2018A',
 result = None
 objlist=[]
 
+def del_obj(cldname):
+	
+	# In this case we delete last object duplicate, because we no need last object
+	for ob in bpy.data.objects[cldname].children:
+		if ob.type == "EMPTY":
+			if '.' in ob.name:
+				_obname = str(ob.name).split('.')[0]
+				obLen=objlist.count(_obname)
+				if len(str(obLen)) == 1:
+					_obLen='.00%s'%obLen
+				elif len(str(obLen)) == 2:
+					_obLen='.0%s'%obLen
+				else:
+					_obLen='.%s'%obLen
+				if ob.name == _obname+_obLen:
+					print('Delete duplicate last object: "%s%s"'%(_obname,_obLen))
+					SelectableObj(ob)
+					bpy.ops.object.delete()
+
 def importStaffWalk(self, context):
 	stid=context.scene.STID
 	exportPath=context.scene.export_path
@@ -142,21 +161,164 @@ def Staff_Config(self,context,fox2xml, cldname):
 
 	return 1
 
-def del_obj(cldname):
-	
-	# In this case we delete last object duplicate, because we no need last object
-	for ob in bpy.data.objects[cldname].children:
+def importBallboy(self, context):
+	stid=context.scene.STID
+	exportPath=context.scene.export_path
+	fpkfilename="%sstaff\\#Win\\staff_%s.fpk"%(exportPath,stid)
+	fpkdfilename="%sstaff\#Win\staff_%s.fpkd"%(exportPath,stid)
+	PES_Stadium_Exporter.pack_unpack_Fpk(fpkfilename)
+	PES_Stadium_Exporter.pack_unpack_Fpk(fpkdfilename)
+	dirPath ="%s\\addons\\Tools\\Gzs\\xml\\scarecrow\\textures\\"%PES_Stadium_Exporter.AddonsPath
+	fox2="%sstaff\\#Win\\staff_%s_fpkd\\Assets\\pes16\\model\\bg\\%s\\staff\\%s_2018_common_ste_sit.fox2"%(exportPath,stid,stid,stid)
+	PES_Stadium_Exporter.compileXML(fox2)
+	xml="%s.xml"%fox2
+	xmlTree = ET.parse(xml)
+	fmdl_name,fmdlname=str(),str()
+	FmdlList=[]
+	for entities in xmlTree.findall('entities'):
+		for entity in entities.findall('entity'):
+			try:
+				fmdl_name = entity.find('staticProperties').findall('property')[8].find('value').text
+			except:
+				pass
+			if ".fmdl" in fmdl_name:
+				fmdlname=os.path.basename(fmdl_name)
+				fmdlPath="%sstaff\\#Win\\staff_%s_fpk\\Assets\\pes16\\model\\bg\\common\\staff\\common\\scenes\\%s"%(exportPath,stid,fmdlname)
+				if fmdlPath not in FmdlList:
+					FmdlList.append(fmdlPath)
+	for fmdl in FmdlList:
+		fname = str(os.path.basename(fmdl)).split(".")[0]
+		print('Importing ==> %s' % fname)
+		PES_Stadium_Exporter.importFmdlfile(fmdl, "Skeleton_%s" % fname, fname, fname, dirPath, "Ballboy")	
+	BallboyConfig(self,context,xml)
+	return 1
+
+ObjectLinksList=["st_jersey_ch00_non",
+				"st_jersey_ch01_non",
+				"st_jersey_ch02_non",
+				"st_jersey_ch03_non",
+]
+# We need read any values and keys of LimitedRotatableObjectLinks
+_linksBaseName=[]
+_linksaddr=[]
+_linksName={}
+_packagePathHash_=[]
+_maxRotDegreeLeft,_maxRotDegreeRight=[],[]
+_maxRotSpeedLeft,_maxRotSpeedRight=[],[]
+def LimitedRotatable_ObjectLinks(self,context,fox2xml):
+	xmlTree = ET.parse(fox2xml)
+	for ob in bpy.data.objects["Ballboy"].children:
 		if ob.type == "EMPTY":
-			if '.' in ob.name:
-				_obname = str(ob.name).split('.')[0]
-				obLen=objlist.count(_obname)
-				if len(str(obLen)) == 1:
-					_obLen='.00%s'%obLen
-				elif len(str(obLen)) == 2:
-					_obLen='.0%s'%obLen
-				else:
-					_obLen='.%s'%obLen
-				if ob.name == _obname+_obLen:
-					print('Delete duplicate last object: "%s%s"'%(_obname,_obLen))
+			for entities in xmlTree.findall('entities'):
+				for entity in entities.findall('entity'):
+					if entity.get('class') == 'LimitedRotatableObjectLinks':
+						if ob.name in ObjectLinksList:
+							_modelName=entity.find('staticProperties').findall('property')[0].findtext('value')
+							_linksName_=entity.find('staticProperties').findall('property')[0].findtext('value')
+							_maxRotDegreeLeft.append(entity.find('staticProperties').findall('property')[3].findtext('value'))
+							_maxRotDegreeRight.append(entity.find('staticProperties').findall('property')[4].findtext('value'))
+							_maxRotSpeedLeft.append(entity.find('staticProperties').findall('property')[5].findtext('value'))
+							_maxRotSpeedRight.append(entity.find('staticProperties').findall('property')[6].findtext('value'))
+							_linksaddr.append(entity.get('addr'))
+							
+							for _property in entity.find('staticProperties').findall('property'):
+								_packagePathHash_type=_property.find('value')
+								_packagePathHash=_packagePathHash_type.get('packagePathHash')
+								if _packagePathHash is not None:
+									_packagePathHash=_packagePathHash_type.get('packagePathHash')
+									_packagePathHash_.append(_packagePathHash)
+							_linksBaseName.append(_modelName)
+							_linksName[_modelName]=_linksName_
+
+def BallboyConfig(self,context,fox2xml):
+	LimitedRotatable_ObjectLinks(self,context,fox2xml)
+	idx=0
+
+	# We need get fullname in xml before applied value and duplicate object
+	model_transform_dict2 = xmlParser(fox2xml)
+	for model in model_transform_dict2.keys():
+		fmdl_name = model.find('staticProperties').findall('property')[8].find('value').text
+		fmdl_name = os.path.splitext(fmdl_name)
+		fmdl_name = str(fmdl_name[0]).split('/')[-1]
+		objlist.append(fmdl_name)
+
+	# Applied value to each object in xml and duplicate object length in xml
+	for ob in bpy.data.objects["Ballboy"].children:
+		if ob.type == "EMPTY":
+			model_transform_dict = xmlParser(fox2xml)
+			if ob.name in ObjectLinksList:
+				ob.scrLimitedRotatable = True
+				ob.EntityObjectLinks=_linksaddr[idx]
+				ob.ObjectLinksName = _linksName[_linksBaseName[idx]]
+				ob.packagePathHash = str(_packagePathHash_[idx])
+				ob.maxRotDegreeLeft = int(_maxRotDegreeLeft[idx])
+				ob.maxRotDegreeRight = int(_maxRotDegreeRight[idx])
+				ob.maxRotSpeedLeft = int(_maxRotSpeedLeft[idx])
+				ob.maxRotSpeedRight = int(_maxRotSpeedRight[idx])
+				idx+=1
+			for model in model_transform_dict.keys():
+				model_name = model.find('staticProperties').findall('property')[0].find('value').text
+				fmdl_name = model.find('staticProperties').findall('property')[8].find('value').text
+				if ob.name in fmdl_name:
+					transformEntityPtr = model.find('staticProperties').findall('property')[3].find('value').text
+					_direction = model.find('staticProperties').findall('property')[18].find('value').text
+					_kind = model.find('staticProperties').findall('property')[19].find('value').text
+					_demoGroup = model.find('staticProperties').findall('property')[20].find('value').text
+					transform = model_transform_dict[model]
+
+					for property in transform.find('staticProperties').findall('property'):
+						addr=property.find('value').text
+						if addr is not None:
+							ob.scrName = model_name
+							ob.scrEntityPtr= addr
+							ob.scrTransformEntity = transformEntityPtr
+							ob.scrDirection = int(_direction)
+							ob.scrKind = int(_kind)
+							ob.scrDemoGroup = int(_demoGroup)
+
+						property_val = property.find('value')
+						transform_type=property.get('name')	
+						if transform_type=='transform_rotation_quat':
+							qx,qy,qz,qw= property_val.get('x'), property_val.get('y'), property_val.get('z'), property_val.get('w')
+							if (qx,qy,qz,qw) is not None:
+								ob.rotation_mode = "QUATERNION"
+								ob.rotation_quaternion.w = float(qw)
+								ob.rotation_quaternion.x = float(qx)
+								ob.rotation_quaternion.y = float(qz)*-1
+								ob.rotation_quaternion.z = float(qy)
+						if transform_type=='transform_translation':
+							tx,ty,tz,tw= property_val.get('x'), property_val.get('y'), property_val.get('z'), property_val.get('w')
+							if (tx,ty,tz,tw) is not None:
+								ob.location.x = float(tx)
+								ob.location.y = float(tz)*-1
+								ob.location.z = float(ty)
+
+					# Actually need duplicate object by length-1 of object in xml, but this no (wee fix it in last loop) 
 					SelectableObj(ob)
-					bpy.ops.object.delete()
+					bpy.ops.object.duplicate()
+	del_obj("Ballboy")
+	return 1
+
+def Ballboy_Assign(self,context):
+	stid=context.scene.STID
+	exportPath=context.scene.export_path
+	fpkd="%sstaff\\#Win\\staff_%s.fpkd"%(exportPath,stid)
+	PES_Stadium_Exporter.pack_unpack_Fpk(fpkd)
+	fox2="%sstaff\\#Win\\staff_%s_fpkd\\Assets\\pes16\\model\\bg\\%s\\staff\\%s_2018_common_ste_sit.fox2"%(exportPath,stid,stid,stid)
+	PES_Stadium_Exporter.compileXML(fox2)
+	xml="%s.xml"%fox2
+	isize=0
+	lstObject, lstTotal,lstTotal2,lstTotal3=[],[],[],[]
+	for ob in bpy.data.objects["Ballboy"].children:
+		if ob.type == "EMPTY":
+			if ob.scrLimitedRotatable:
+				lstTotal.append(ob.ObjectLinksName)
+				lstTotal2.append(ob.scrName)
+				lstTotal3.append(ob.scrEntityPtr)
+				if not ob.ObjectLinksName in lstObject:
+					lstObject.append(ob.ObjectLinksName)
+			isize+=1
+	PesFoxXML.Ballboy_xml(xml,isize,lstTotal,lstTotal2,lstTotal3)
+	PES_Stadium_Exporter.compileXML(xml)
+	PES_Stadium_Exporter.pack_unpack_Fpk(fpkd+".xml")
+	return 1
