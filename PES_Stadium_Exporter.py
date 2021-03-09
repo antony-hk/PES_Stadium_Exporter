@@ -3829,7 +3829,13 @@ class Convert_OT(bpy.types.Operator):
 												print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node ({4})"
 														.format(context.scene.part_info, ob.parent.name,ob2.parent.name, ob2.name, nodes.name))
 												return {'CANCELLED'}
-											
+											if not os.path.isfile(filePath):
+												self.report({"WARNING"}, "Error when converting, file not found, check in Blender Console => Window -> Toggle System Console !!")
+												print("\nFile not found in source texture")
+												print("\nCheck out Object in Parent ({0} --> {1} --> {2}) in Mesh object ({3}) in node ({4})"
+														.format(context.scene.part_info, ob.parent.name,ob2.parent.name, ob2.name, nodes.name))
+												print (f"Check out Texture in -> Texture Filename: ({fileName}), Filepath: ({filePath}).")
+												return {'CANCELLED'}
 											width = nodes.image.size[0]
 											height = nodes.image.size[1]
 											print (f"Texture Dimensions:({width} x {height})")
