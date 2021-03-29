@@ -396,13 +396,13 @@ def makedir(DirName, isStadium):
 	return 1
 
 def remove_dir(dirPath):
-	if os.path.exists(dirPath):
-		shutil.rmtree(dirPath)
+	# if os.path.exists(dirPath):
+	# 	shutil.rmtree(dirPath)
 	return 1
 
 def remove_file(filePath):
-	if os.path.isfile(filePath):
-		os.remove(filePath)
+	# if os.path.isfile(filePath):
+	# 	os.remove(filePath)
 	return 1
 
 def compileXML(filePath):
